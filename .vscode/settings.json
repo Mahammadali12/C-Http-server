@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "socket.h": "c",
+        "in.h": "c",
+        "sockaddr.h": "c",
+        "fcntl.h": "c"
+    }
+}

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+
 int main()
 {
     // struct sockaddr_in address;
@@ -12,7 +13,6 @@ int main()
     // address.sin_port = htons(8080);
 
     pid_t pid;
-
     printf("Fork here. %d \n",pid);
     
     pid = fork();
@@ -22,20 +22,23 @@ int main()
         return (1);
     }
     printf("\nFork successful!\n");
-    printf("%d \n",pid);
+    
 
-    // if (pid == 0)
-    // {
-    //     // Fork's return value is 0:
-    //     // we are now in the child process
-    //     printf("Child: I'm the child, my internal pid is %d.\n", pid);
-    // }
-    // else if (pid > 0)
-    // {
-    //     // Fork's return value is not 0
-    //     // which means we are in the parent process
-    //     printf("Parent: I'm the parent, my child's pid is %d.\n", pid);
-    // }
+    if (pid == 0)
+    {
+        // Fork's return value is 0:
+        // we are now in the child process
+        printf("Child: I'm the child, my internal pid is %d.\n", pid);
+        sleep(1);
+        printf("Hello, I am awake from the sleep\n");
+
+    }
+    else if (pid > 0)
+    {
+        // Fork's return value is not 0
+        // which means we are in the parent process
+        printf("Parent: I'm the parent, my child's pid is %d.\n", pid);
+    }
     return(0);
 
 }

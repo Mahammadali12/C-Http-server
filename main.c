@@ -7,10 +7,10 @@
 
 int main()
 {
-    // struct sockaddr_in address;
+    struct sockaddr_in address;
 
-    // address.sin_family = AF_INET6;
-    // address.sin_port = htons(8080);
+    address.sin_family = AF_INET6;
+    address.sin_port = htons(8080);
 
     pid_t pid;
     printf("Fork here. %d \n",pid);
@@ -37,6 +37,7 @@ int main()
     {
         // Fork's return value is not 0
         // which means we are in the parent process
+        printf("\e[93m\e[41m\e[1m\e[4mThis is ANSI CODE SAMPLE with this I can format my terminal output\e[0m\n");
         printf("Parent: I'm the parent, my child's pid is %d.\n", pid);
     }
     return(0);

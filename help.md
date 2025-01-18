@@ -82,3 +82,30 @@ struct addrinfo {
     
 - **ai_next**: a pointer to the next element in the linked list.
 
+## Preparing Sockets
+```C
+#include <sys/socket.h>
+int socket(int domain, int type, int protocol);
+```
+
+-    **domain**: the socket’s protocol family, generally ``PF_INET`` or ``PF_INET6``. ``PF_INET`` exists for historical reasons and is, in practice, identical to ``AF_INET``. The same is true for ``PF_INET6``.
+-   **type**: the type of socket, generally ``SOCK_STREAM`` or ``SOCK_DGRAM``.
+-   **protocol**: the protocol to use with the socket. In general, there is only one    valid protocol by socket type, TCP for a stream socket and UDP for a datagram socket, which means we can safely put 0 here. 
+---
+
+- Connect the socket to a remote address with ``connect()``. This will allow it to work as a **client**, able to make requests to a remote server.
+- Connect the socket to a local address with ``bind()``. In this case, it will work as a **server**, able to accept connections from remote clients.
+
+![Socket architecture](https://www.codequoi.com/images/socket-c/sockets-en.drawio.png "socket")
+
+### Client Side: Connecting to a Server via a Socket
+
+ ```C
+ #include <sys/socket.h>
+ int connect(int sockfd, const struct sockaddr *serv_addr,
+            socklen_t addrlen);
+```
+- **sockfd**: the socket file descriptor we got from our call to ``socket()``,
+- **serv_addr**: a pointer to the structure containing the connection information. This will either be ``sockaddr_in`` for an IPv4 address, or ``sockaddr_in6`` for an IPv6 address.
+- **addrlen**: the size in bytes of the previous structure, ``serv_addr``
+

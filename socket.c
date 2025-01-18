@@ -8,33 +8,24 @@
 
 int main ()
 {
-
-    struct addrinfo* res;
     struct addrinfo hints;
+    struct addrinfo* res;
+    char buffer [INET6_ADDRSTRLEN];
 
-    char buffer [1000];
+    getaddrinfo("www.google.com","80",&hints,&res);
 
+    // struct sockaddr_in* ipv4 = (struct sockaddr_in*) res->ai_addr;    
 
-    getaddrinfo("www.ada.edu.az", "http",&hints,&res); // converts url to ip address and stores it in res->ai_addr
-    
-    
-    // printf("%s\n",res->ai_addr->sa_data);
-    // printf("%s\n",res->ai_addr->sa_family);
+    // inet_ntop (res->ai_family, &(ipv4->sin_addr), buffer,sizeof(buffer));
 
+    int socket_fd = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
 
+    if(connect(socket_fd,res->ai_addr,res->ai_addrlen) == -1)
+    {
+        perror("ERROR CONNECTING socket\n");
+        return(1);
+    }
 
-    struct sockaddr_in* ipv4 = (struct sockaddr_in *) res->ai_addr;  //converts general ip to ipv4 
-    
-
-    // printf("%s\n",ipv4->sin_addr);
-    // ipv4->sin_addr = INADDR_LOOPBACK;
-
-    inet_ntop(res->ai_family, &(ipv4->sin_addr), buffer, sizeof buffer);  
-
-    printf("%s\n",buffer);
-    // char* url = "www.example.com";
-
-    // printf("%d\n",);
     
     
 }

@@ -98,7 +98,7 @@ int socket(int domain, int type, int protocol);
 
 ![Socket architecture](https://www.codequoi.com/images/socket-c/sockets-en.drawio.png "socket")
 
-### Client Side: Connecting to a Server via a Socket
+## Client Side: Connecting to a Server via a Socket
 
  ```C
  #include <sys/socket.h>
@@ -109,3 +109,15 @@ int socket(int domain, int type, int protocol);
 - **serv_addr**: a pointer to the structure containing the connection information. This will either be ``sockaddr_in`` for an IPv4 address, or ``sockaddr_in6`` for an IPv6 address.
 - **addrlen**: the size in bytes of the previous structure, ``serv_addr``
 
+
+## Server Side: Accepting Client Connections via a Socket
+
+### Binding the Socket to the Local Address
+```C
+#include <sys/socket.h>
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+- **sockfd**: the socket file descriptor we got with our call to ``socket()``.
+- **addr**: a pointer to the structure containing the connection information. This is either a ``sockaddr_in`` for an IPv4 address, or a ``sockaddr_in6`` for an IPv6 address.
+- **addrlen**: the size in bytes of the previous structure, ``addr``.

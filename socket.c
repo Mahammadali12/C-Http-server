@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -8,11 +7,11 @@
 
 int main ()
 {
-    struct addrinfo hints;
+    struct addrinfo hint;
     struct addrinfo* res;
     char buffer [INET6_ADDRSTRLEN];
 
-    getaddrinfo("www.google.com","80",&hints,&res);
+    getaddrinfo("www.google.com","80",&hint,&res);
 
     // struct sockaddr_in* ipv4 = (struct sockaddr_in*) res->ai_addr;    
 

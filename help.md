@@ -121,3 +121,27 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 - **sockfd**: the socket file descriptor we got with our call to ``socket()``.
 - **addr**: a pointer to the structure containing the connection information. This is either a ``sockaddr_in`` for an IPv4 address, or a ``sockaddr_in6`` for an IPv6 address.
 - **addrlen**: the size in bytes of the previous structure, ``addr``.
+
+### Listening via a Socket to Detect Connection Requests
+```C
+#include <sys/socket.h>
+int listen(int sockfd, int backlog);
+```
+
+-    **sockfd**: the socket file descriptor that we got with the call to ``socket()``.
+-    **backlong**: an integer representing the number of connection requests allowed in the queue. Incoming connections will be placed in this queue until we accept them. Most systems automatically cap the number of pending connection requests to **20**, but we can manually specify this maximum as we wish.
+
+### Accepting a Client Connection
+```C
+#include <sys/socket.h>
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+
+-    **sockfd**: the listening socket’s file descriptor, which we got with the call to ``socket()``.
+-    **addr**: a pointer to a ``sockaddr`` structure where ``accept()`` can fill out the information related to the client socket. If we don’t want to save the client’s address or port number, we can just put ``NULL`` here.
+-    **addrlen**: a pointer to an integer which contains the size in bytes of the previous structure. ``accept()`` will adjust this value if it is too large for the final size of the structure, but it will truncate the address if this value is smaller than the final size of the address.
+
+- When we ``accept()`` the request, that function will return a new file descriptor bound to the client’s address, through which we will be able to communicate with that client. So we will end up with two file descriptors: our initial socket that will continue listening to our port, and a new file descriptor for the client, which we can use to send and receive data.
+
+

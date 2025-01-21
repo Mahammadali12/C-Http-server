@@ -136,12 +136,46 @@ int listen(int sockfd, int backlog);
 #include <sys/socket.h>
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 ```
-
-
 -    **sockfd**: the listening socket’s file descriptor, which we got with the call to ``socket()``.
 -    **addr**: a pointer to a ``sockaddr`` structure where ``accept()`` can fill out the information related to the client socket. If we don’t want to save the client’s address or port number, we can just put ``NULL`` here.
 -    **addrlen**: a pointer to an integer which contains the size in bytes of the previous structure. ``accept()`` will adjust this value if it is too large for the final size of the structure, but it will truncate the address if this value is smaller than the final size of the address.
 
 - When we ``accept()`` the request, that function will return a new file descriptor bound to the client’s address, through which we will be able to communicate with that client. So we will end up with two file descriptors: our initial socket that will continue listening to our port, and a new file descriptor for the client, which we can use to send and receive data.
 
+## Sending and Receiving Data Through Sockets
 
+### Sending Data via a Socket
+```C
+#include <sys/socket.h>
+ssize_t send(int socket, const void *buf, size_t len, int flags);
+```
+
+-    **socket**: the file descriptor of the socket through which we’d like to send data. In a client program, this will be the fd we got from our call to ``socket()``; on the server side, this will instead be the client fd we got from our call to ``accept()``.
+-    **buf**: the buffer or string containing the message to send.
+-    **len**: an integer representing the size in bytes of the message to send.
+-    **flags**: an integer containing flags about the way the message should be transmitted. A list of valid flags is available on the ``send()`` manual page. Usually, we only can get away with setting 0 here.
+- The ``send()`` function returns the number of bytes that were successfully sent.
+
+### Receiving Data via a Socket
+```C
+#include <sys/socket.h>
+ssize_t recv(int socket, void *buf, ssize_t len, int flags);
+```
+-    **socket**: the file descriptor of the socket through which we’d like to send data. In a client program, this will be the fd we got from our call to ``socket()``; on the server side, this will instead be the client fd we got from our call to ``accept()``.
+-    **buf**: a pointer to a buffer, a memory area, where we can store the read data.
+-    **len**: the size in bytes of the previous buffer.
+-    **flags**: the flags relating to message reception. Usually, we’ll only need to supply 0, here. See the ``recv()`` manual page for a list of available flags.
+- Just like ``send()``, ``recv()`` returns the number of bytes it managed to store in the buffer.
+
+## Closing a Socket Connection
+```C
+#include <sys/socket.h>
+int shutdown(int sockfd, int how);
+```
+
+-    **sockfd**: the socket file descriptor we want to close.
+-    **how**: an integer containing flags indicating how to close the socket. Valid flags here are:
+        - **``SHUT_RD``** to close the read end of the socket and prevent data reception.
+        - **``SHUT_WR``** to close the write end of the socket and prevent data transmission.
+        - **``SHUT_RDWR``** to close both ends of the socket and prevent data reception and transmission.
+- However, we must keep in mind that ``shutdown()`` does not destroy the socket file descriptor or free the memory associated with it. It only modifies its read and write permissions. A call to ``close()`` is therefore still necessary.

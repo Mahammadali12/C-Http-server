@@ -129,7 +129,7 @@ int listen(int sockfd, int backlog);
 ```
 
 -    **sockfd**: the socket file descriptor that we got with the call to ``socket()``.
--    **backlong**: an integer representing the number of connection requests allowed in the queue. Incoming connections will be placed in this queue until we accept them. Most systems automatically cap the number of pending connection requests to **20**, but we can manually specify this maximum as we wish.
+-    **backlog**: an integer representing the number of connection requests allowed in the queue. Incoming connections will be placed in this queue until we accept them. Most systems automatically cap the number of pending connection requests to **20**, but we can manually specify this maximum as we wish.
 
 ### Accepting a Client Connection
 ```C

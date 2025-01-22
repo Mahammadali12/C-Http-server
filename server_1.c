@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <netdb.h>
+#include <malloc.h>
 
 
 #define PORT 8080
@@ -36,7 +37,7 @@ int main (void)
         return(1);
     }
 
-    printf("SOCKET CREATED %d\n",socket_fd);
+    printf("SERVER_SOCKET: %d\n",socket_fd);
 
     if( bind(socket_fd,(struct sockaddr *)&addr,sizeof addr) == -1)
     {
@@ -59,7 +60,16 @@ int main (void)
         return(1);
     }
 
-
     printf("CLIENT %d SERVER %d\n",client_fd,socket_fd);
+
+    char* recieved_msg = malloc(1000);
+    int received_byte;
+    if((received_byte = recv(client_fd,recieved_msg,600,0)) == 0)
+    {
+        perror("ZERO BYTES WERE RECEIVED");
+        return(1);
+    }
+    printf("message %d bytes were received\n",received_byte);
+    printf("MESSAGE:   %s\n",recieved_msg);
 
 }

@@ -1,6 +1,7 @@
 
 ### struct to for IPv4 only (see sockaddr_in6 for IPv6)
 ```c
+#include <netinet/in.h>
 struct sockaddr_in {
     sa_family_t    sin_family;
     in_port_t      sin_port;
@@ -14,6 +15,7 @@ struct in_addr {
 ### struct for IPv6 only (see sockaddr_in for IPv4)
 
 ```C
+#include <netinet/in.h>
 struct sockaddr_in6 {
     sa_family_t     sin6_family;
     in_port_t       sin6_port;
@@ -35,6 +37,7 @@ int inet_pton(int af, const char * src, void *dst);
 - **dst**: a pointer to an in_addr (IPv4) or in6_addr (IPv6) structure in which to store the result of the conversion.
 
 ```C
+#include<arpa/inet.h>
 struct sockaddr_in6 sa;// IPv6 only
 inet_pton(AF_INET6, "2001:db8:0:85a3::ac1f:8001", &(sa.sin6_addr));
 ```
@@ -42,6 +45,7 @@ inet_pton(AF_INET6, "2001:db8:0:85a3::ac1f:8001", &(sa.sin6_addr));
 ## Automatically Fill In the IP Address with getaddrinfo()
 
 ```C
+#include <netdb.h>
 int getaddrinfo(const char *node, const char *service,
                 const struct addrinfo *hints,
                 struct addrinfo **res);
@@ -54,6 +58,7 @@ int getaddrinfo(const char *node, const char *service,
 
 ### The addrinfo Structure
 ```C
+#include <netdb.h>
 struct addrinfo {
     int              ai_flags;
     int              ai_family;

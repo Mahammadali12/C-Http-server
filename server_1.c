@@ -10,6 +10,7 @@
 
 
 #define PORT 8080
+#define BUFF_SIZE 1000
 int main (void)
 {
     int socket_fd;
@@ -62,14 +63,27 @@ int main (void)
 
     printf("CLIENT %d SERVER %d\n",client_fd,socket_fd);
 
-    char* recieved_msg = malloc(1000);
+    char* recieved_msg = malloc(BUFF_SIZE);
     int received_byte;
-    if((received_byte = recv(client_fd,recieved_msg,600,0)) == 0)
-    {
+    if((received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0)) == 0)
+    {       
         perror("ZERO BYTES WERE RECEIVED");
         return(1);
     }
-    printf("message %d bytes were received\n",received_byte);
-    printf("MESSAGE:   %s\n",recieved_msg);
+    printf("%d bytes were received from client: %d\n",received_byte,client_fd);
+    printf("MESSAGE: %s\n",recieved_msg);
+
+    char* response = malloc(BUFF_SIZE);
+    response = "XUY";
+    int sent_byte = 0;
+    if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+    {
+        perror("ZERO BYTES WERE SENT");
+        return(1);
+    }
+
+    printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
+    printf("Response: %s\n",response);
+
 
 }

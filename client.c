@@ -33,18 +33,36 @@ int main (int argc, char** argv)
         return(1);
     }
 
-    char* msg = malloc(BUFF_SIZE);
+    char* request = malloc(BUFF_SIZE);
     int bytes_sent = 0;
-    msg = argv[1];
+    if(argv[1] == NULL)
+    {
+        perror("NO URL");
+        return(1);
+    }
 
-    if((bytes_sent = send(socket_fd,msg,strlen(msg),0)) == 0)
+    strcpy(request,argv[1]);
+
+    if((bytes_sent = send(socket_fd,request,strlen(request),0)) == 0)
     {
         perror("MESSAGE WAS NOT SENT");
         return(1);
     }
-
     printf("message %d bytes were sent\n",bytes_sent);
-    printf("MESSAGE:   %s\n",msg);
+    printf("MESSAGE:   %s\n",request);
 
+    char* response = malloc(BUFF_SIZE);
+    int received_byte = 0;
 
+    if((received_byte = recv(socket_fd,response,BUFF_SIZE,0)) == 0)
+    {
+        perror("ZERO BYTES WERE RECEIVED AS A RESPONSE");
+        return(1);
+    }
+
+    printf("%d bytes as a response were received from server\n",received_byte);
+    printf("Response: %s\n",response);
+
+    free(request);
+    free(response);
 }

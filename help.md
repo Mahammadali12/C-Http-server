@@ -184,3 +184,65 @@ int shutdown(int sockfd, int how);
         - **``SHUT_WR``** to close the write end of the socket and prevent data transmission.
         - **``SHUT_RDWR``** to close both ends of the socket and prevent data reception and transmission.
 - However, we must keep in mind that ``shutdown()`` does not destroy the socket file descriptor or free the memory associated with it. It only modifies its read and write permissions. A call to ``close()`` is therefore still necessary.
+
+## I/O Multiplexing: Handling Several Sockets Without Blocking
+
+### Making Sockets Non-Blocking with fcntl()
+When we invoke the ``socket()`` system call to get a file descriptor for our socket, the operating system’s kernel automatically creates it as “blocking”. If we so desire, we can transform it into a non-blocking socket with the file descriptor manipulation function ``fcntl()`` from ``<unistd.h>`` and ``<fcntl.h>``, like this:
+
+```C
+#include <unistd.h>
+#include <fcntl.h>
+socket_fd = socket(PF_INET, SOCK_STREAM, 0);
+fcntl(socket_fd, F_SETFL, O_NONBLOCK);
+```
+When we make the socket non-blocking with **``O_NONBLOCK``**, it prevents system calls like ``recv()`` from suspending out program during their executions. If there is nothing to read from the socket, ``recv()`` immediately returns with -1 and sets **``errno``** to **``EAGAIN``** or **``EWOULDBLOCK``**. With this information, we can loop over our sockets one by one to check if they have anything for us to read, and if not, we move onto the next. The same is possible for any blocking function such as ``accept()``, for example.
+
+### Monitoring Sockets with select()
+What would be convenient is a way to monitor all of our socket file descriptors and be notified when one of them is ready for an operation. After all, if we know the socket is ready, we can read or write to it without any risk of blocking.
+
+```C
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+int select(int nfds, fd_set *readfds, fd_set *writefds,
+           fd_set *exceptfds, struct timeval *timeout);
+```
+
+-    **nfds**: an integer indicating the value of the highest file descriptor to monitor, plus one.
+-    **readfds**: a set of file descriptors to monitor for reading, to make sure a call to ``read()`` or ``recv()`` will not block. Can be **``NULL``**.
+-    **writefds**: a set of file descriptors to monitor for writing, to ensure a call to ``write()`` or ``send()`` will not block. Can be **``NULL``**.
+-    **exceptfds**: a set of file descriptors to monitor for exceptions. Can be **``NULL``**.
+-    **timeout**: the delay after which we force ``select()`` to finish its execution if no file descriptors in any set change states.
+
+- If it succeeds, ``select()`` modifies each set to indicate which file descriptors are ready for an operation. It also returns the total number of file descriptors which are ready among the three sets. If none of the descriptors are ready before the timeout is reached, ``select()`` can return **0**.
+
+- If it encounters an error, ``select()`` returns -1 and sets ``errno``. In this case, it does not modify the file descriptor sets.
+
+### Manipulating File Descriptor Sets for select()
+
+- In order to manipulate the file descriptor sets that we want to monitor with select(), we will want to use the following macros:
+
+```C
+void FD_CLR(int fd, fd_set *set);   // Removes an fd from the set
+int  FD_ISSET(int fd, fd_set *set); // Checks if an fd is part of the set
+void FD_SET(int fd, fd_set *set);   // Adds an fd to the set
+void FD_ZERO(fd_set *set);          // Sets the set to 0
+```
+### Select()’s Timeout
+
+The timeout parameter represents the maximum time limit spent in the ``select()`` function. Past this deadline, if none of the file descriptors of the sets it monitors become ready, ``select()`` will return. We will then be able to do other things, such as print a message to confirm we are still waiting.
+
+The structure to use for the temporal value, ``timeval``, can be found in ``<sys/time.h>``:
+
+```C
+#include <sys/time.h>
+struct timeval {
+    long    tv_sec;    // seconds
+    long    tv_usec;   // microseconds
+};
+```
+If this time value is set to 0, ``select()`` will return immediately; if we set it to **``NULL``**, ``select()`` will be able to block indefinitely if none of the file descriptors change states.
+
+On some Linux systems, ``select()`` _modifies_ the timeval value upon returning, to reflect the time that is left. This is far from universal, so for portability’s sake, we should not lean on this aspect.

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <string.h>
-
+#include <fcntl.h>
 
 #define PORT 8080
 #define BUFF_SIZE 1000
@@ -26,6 +26,8 @@ int main (int argc, char** argv)
         return(1);
     }
     printf("CLIENT_SOCKET: %d\n",socket_fd);
+
+    // fcntl(socket_fd,F_SETFL,O_NONBLOCK);
     
     if (connect(socket_fd,(struct sockaddr*)&addr,sizeof addr) == -1)
     {

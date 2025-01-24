@@ -30,7 +30,8 @@ int main (void)
     // {
     //     perror("GETADDRINFO()");
     // }
-
+while (1)
+{
     
     if((socket_fd = socket(addr.sin_family,SOCK_STREAM,0)) == -1)
     {
@@ -52,6 +53,9 @@ int main (void)
         return(1);
     }
 
+    /* code */
+
+
     int client_fd;
     struct sockaddr_storage dd;
     socklen_t addrlen;
@@ -65,16 +69,18 @@ int main (void)
 
     char* recieved_msg = malloc(BUFF_SIZE);
     int received_byte;
-    if((received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0)) == 0)
-    {       
-        perror("ZERO BYTES WERE RECEIVED");
-        return(1);
-    }
+    // if((
+        received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
+        // ) == 0)
+    // {       
+    //     perror("ZERO BYTES WERE RECEIVED");
+    //     return(1);
+    // }
     printf("%d bytes were received from client: %d\n",received_byte,client_fd);
     printf("MESSAGE: %s\n",recieved_msg);
 
     char* response = malloc(BUFF_SIZE);
-    response = "XUY";
+    response = "<html>\nWelcome to the HTTP 0.9 response\n</html>\n";
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
     {
@@ -83,7 +89,11 @@ int main (void)
     }
 
     printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
-    printf("Response: %s\n",response);
+    printf("Response:\n",response);
+    printf("%s\n",response);
 
+    close(client_fd);
+    close(socket_fd);
+}
 
 }

@@ -6,12 +6,12 @@
 int main ()
 {
     int file_dp;
-    char* file_path = "/home/maqa/C-Http-server/main.c";
+    char* file_path = "/home/maqa/C-Http-server/index.html";
     file_dp = open(file_path,O_RDONLY);
 
     char* buffer = (char*) malloc(2881);
 
-    printf("%d\n", read(file_dp,buffer,2879));
+    printf("%d\n", read(file_dp,buffer,211));
     printf("%s",buffer);
 
 }

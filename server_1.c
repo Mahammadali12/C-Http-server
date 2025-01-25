@@ -7,7 +7,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <malloc.h>
-
+#include <fcntl.h>
 
 #define PORT 8080
 #define BUFF_SIZE 1000
@@ -30,8 +30,7 @@ int main (void)
     // {
     //     perror("GETADDRINFO()");
     // }
-while (1)
-{
+
     
     if((socket_fd = socket(addr.sin_family,SOCK_STREAM,0)) == -1)
     {
@@ -52,7 +51,8 @@ while (1)
         perror("LISTEN()");
         return(1);
     }
-
+while (1)
+{
     /* code */
 
 
@@ -77,10 +77,13 @@ while (1)
     //     return(1);
     // }
     printf("%d bytes were received from client: %d\n",received_byte,client_fd);
-    printf("MESSAGE: %s\n",recieved_msg);
+    printf("MESSAGE:\n");
+    printf("%s\n",recieved_msg);
 
     char* response = malloc(BUFF_SIZE);
-    response = "<html>\nWelcome to the HTTP 0.9 response\n</html>\n";
+    int file_dp;
+    file_dp = open("/home/maqa/C-Http-server/index.html", O_RDONLY);
+    printf("%d bytes were read",read(file_dp,response,BUFF_SIZE));
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
     {
@@ -92,8 +95,12 @@ while (1)
     printf("Response:\n",response);
     printf("%s\n",response);
 
+    close(file_dp);
+    free(response);
     close(client_fd);
-    close(socket_fd);
+    free(recieved_msg);
 }
+
+close(socket_fd);
 
 }

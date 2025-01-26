@@ -11,6 +11,22 @@
 
 #define PORT 8080
 #define BUFF_SIZE 1000
+
+void generateResponse(char* response,char* request);
+
+
+struct http_response
+{
+    char* status_line;
+    char* general_header;
+    char* response_heade;
+    char* entity_header;
+    char* entity_body;
+};
+
+
+
+
 int main (void)
 {
     int socket_fd;
@@ -39,6 +55,17 @@ int main (void)
     }
 
     printf("SERVER_SOCKET: %d\n",socket_fd);
+
+
+
+
+
+    int opt = 1;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        return(1);
+    }
+
 
     if( bind(socket_fd,(struct sockaddr *)&addr,sizeof addr) == -1)
     {
@@ -83,7 +110,7 @@ while (1)
     char* response = malloc(BUFF_SIZE);
     int file_dp;
     file_dp = open("/home/maqa/C-Http-server/index.html", O_RDONLY);
-    printf("%d bytes were read",read(file_dp,response,BUFF_SIZE));
+    printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
     {
@@ -94,6 +121,10 @@ while (1)
     printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
     printf("Response:\n",response);
     printf("%s\n",response);
+    printf("--------------\n");
+    generateResponse(response,recieved_msg);
+    printf("\n");
+    printf("--------------\n");
 
     close(file_dp);
     free(response);
@@ -102,5 +133,41 @@ while (1)
 }
 
 close(socket_fd);
+}
 
+
+void generateResponse(char* response,char* request)
+{
+    int file_dp = open("/home/maqa/C-Http-server/bugg.txt",O_APPEND | O_WRONLY);
+    // FILE * fp = fopen("/home/maqa/C-Http-server/bugg.txt","w");
+    if(file_dp == 0)
+    {
+        printf("yarrrraaa");
+        return;
+    }
+    // char* buf = malloc(10);
+    int cnt = 0;
+    int init = 0;
+    while (cnt < 4)
+    {
+        // fprintf(fp,"\e[31m%c\e[0m",*request);
+        int read = write(file_dp,request,1);
+        if( read <= 0)
+        {
+            perror ("ERROR WRITING TO THE FILE");
+        }
+        // printf("READ: %d",read);
+        // printf("%d -- %c\n",*request,*request);
+        
+        // printf("%d",request);
+        request = request + 1;
+        if(*request == 10)
+        {
+            cnt++;
+            printf("\n");
+            printf("%d HERE YOU GO %d\n",init,cnt);
+        }
+        init++;
+    }
+    
 }

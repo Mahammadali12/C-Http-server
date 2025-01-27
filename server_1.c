@@ -155,7 +155,7 @@ void generateResponse(char* response,char* request)
 
 
     int space_index;
-    while (*request !='\n' )
+    while (*(request+2)!='\0')
     {
         printf("%i ",*request);
         request = request+1;
@@ -163,16 +163,44 @@ void generateResponse(char* response,char* request)
     printf("\n");
     
 
+    // do
+    // {
+    //     printf("%i ",*request);
+    //     request = request+1;
+        
+    // }while (*(request-1) !='\n');
+    // printf("\n");
+    
+    
+    // do
+    // {
+    //     printf("%i ",*request);
+    //     request = request+1;
+    // }while (*(request-1) !='\n');
+    // printf("\n");
+    
+    // do
+    // {
+    //     printf("%i ",*request);
+    //     request = request+1;   
+    // }while (*(request-1) !='\n');
+    // printf("\n");
+    
+    // do
+    // {
+    //     printf("%i ",*request);
+    //     request = request+1;   
+    // }while (*(request-1) !='\n');
+    // printf("\n");
+    
 
-
-
-
-
-
-
-
-
-
+    // do
+    // {
+    //     printf("%i ",*request);
+    //     request = request+1;   
+    // }while (*(request-1) !='\n');
+    // printf("\n");
+    
 
 
 

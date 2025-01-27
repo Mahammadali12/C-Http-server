@@ -25,6 +25,12 @@ struct http_response
 };
 
 
+struct http_request
+{
+
+};
+
+
 
 
 int main (void)
@@ -54,7 +60,7 @@ int main (void)
         return(1);
     }
 
-    printf("SERVER_SOCKET: %d\n",socket_fd);
+    printf("[\e[1m\e[31mSERVER_SOCKET\e[0m]: %d\n",socket_fd);
 
 
 
@@ -92,10 +98,11 @@ while (1)
         return(1);
     }
 
-    printf("CLIENT %d SERVER %d\n",client_fd,socket_fd);
+    printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
 
     char* recieved_msg = malloc(BUFF_SIZE);
     int received_byte;
+
     // if((
         received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
         // ) == 0)
@@ -103,7 +110,8 @@ while (1)
     //     perror("ZERO BYTES WERE RECEIVED");
     //     return(1);
     // }
-    printf("%d bytes were received from client: %d\n",received_byte,client_fd);
+
+    printf("%d bytes were received from client:%d\n",received_byte,client_fd);
     printf("MESSAGE:\n");
     printf("%s\n",recieved_msg);
 
@@ -119,11 +127,10 @@ while (1)
     }
 
     printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
-    printf("Response:\n",response);
+    printf("Response:\n");
     printf("%s\n",response);
     printf("--------------\n");
     generateResponse(response,recieved_msg);
-    printf("\n");
     printf("--------------\n");
 
     close(file_dp);
@@ -142,32 +149,60 @@ void generateResponse(char* response,char* request)
     // FILE * fp = fopen("/home/maqa/C-Http-server/bugg.txt","w");
     if(file_dp == 0)
     {
-        printf("yarrrraaa");
+        printf("ERROR opening file");
         return;
     }
-    // char* buf = malloc(10);
-    int cnt = 0;
-    int init = 0;
-    while (cnt < 4)
+
+
+    int space_index;
+    while (*request !='\n' )
     {
-        // fprintf(fp,"\e[31m%c\e[0m",*request);
-        int read = write(file_dp,request,1);
-        if( read <= 0)
-        {
-            perror ("ERROR WRITING TO THE FILE");
-        }
-        // printf("READ: %d",read);
-        // printf("%d -- %c\n",*request,*request);
-        
-        // printf("%d",request);
-        request = request + 1;
-        if(*request == 10)
-        {
-            cnt++;
-            printf("\n");
-            printf("%d HERE YOU GO %d\n",init,cnt);
-        }
-        init++;
+        printf("%i ",*request);
+        request = request+1;
     }
+    printf("\n");
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // char* buf = malloc(10);
+    // int cnt = 0;
+    // int init = 0;
+    // while (cnt < 4 )
+    // {
+    //     // fprintf(fp,"\e[31m%c\e[0m",*request);
+    //     int read = write(file_dp,request,1);
+    //     if( read <= 0)
+    //     {
+    //         perror ("ERROR WRITING TO THE FILE");
+    //     }
+    //     printf("%c",*request);
+    //     // printf("READ: %d",read);
+    //     // printf("%d -- %c\n",*request,*request);
+        
+    //     // printf("%d",request);
+    //     request = request + 1;
+    //     if(*request == 10)
+    //     {
+    //         cnt++;
+    //         // printf("%d HERE YOU GO %d\n",init,cnt);
+    //         // printf("\e[1m found\e[0m");
+    //     }
+    //     init++;
+    // }
     
 }

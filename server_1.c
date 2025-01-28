@@ -15,21 +15,12 @@
 void generateResponse(char* response,char* request);
 
 
-struct http_response
+struct http_request_requestLine
 {
-    char* status_line;
-    char* general_header;
-    char* response_heade;
-    char* entity_header;
-    char* entity_body;
+    char* method;
+    char* request_URI;
+    char* HTTP_version;
 };
-
-
-struct http_request
-{
-
-};
-
 
 
 
@@ -60,7 +51,7 @@ int main (void)
         return(1);
     }
 
-    printf("[\e[1m\e[31mSERVER_SOCKET\e[0m]: %d\n",socket_fd);
+    printf("[\e[1;31mSERVER_SOCKET\e[0m]: %d\n",socket_fd);
 
 
 
@@ -145,23 +136,72 @@ close(socket_fd);
 
 void generateResponse(char* response,char* request)
 {
-    int file_dp = open("/home/maqa/C-Http-server/bugg.txt",O_APPEND | O_WRONLY);
+    // int file_dp = open("/home/maqa/C-Http-server/bugg.txt",O_APPEND | O_WRONLY);
     // FILE * fp = fopen("/home/maqa/C-Http-server/bugg.txt","w");
-    if(file_dp == 0)
-    {
-        printf("ERROR opening file");
-        return;
-    }
-
-
-    int space_index;
+    // if(file_dp == 0)
+    // {
+    //     printf("ERROR opening file");
+    //     return;
+    // }
+    struct http_request_requestLine daldan;
+    daldan.method = malloc(4);
+    daldan.HTTP_version = malloc(8);
+    daldan.request_URI = malloc(100);
+    
+    int flag = 0;
+    int finish = 0;
+    char* temp_request = request;
     while (*(request+2)!='\0')
     {
+        
+        
+        if(*request == '\r' && flag == 2)
+        {
+            strncpy(daldan.HTTP_version,temp_request,finish);
+            flag++;
+            temp_request +=1;
+            temp_request = temp_request + finish;
+            break;
+        }
+
+        if(*request == ' ' && flag == 1)
+        {
+            strncpy(daldan.request_URI,temp_request,finish);
+            flag++;
+            // temp_request +=1;
+            temp_request = temp_request + finish;
+            finish = 0;
+        }
+
+        if(*request == ' ' && flag == 0)
+        {
+            strncpy(daldan.method,temp_request,finish);
+            flag++;
+            temp_request = temp_request + finish;
+            temp_request +=1;
+            finish = 0;
+        }
+
+
+        // if(*request == ' ' && flag == 2)
+        // {
+        //     strncpy(daldan.method,temp_request,finish);
+        //     flag++;
+        //     temp_request = temp_request + finish;
+        // }
+
+        finish ++;
+
         printf("%i ",*request);
+        if(*request == '\n')
+        printf("%i",'\n');
         request = request+1;
     }
     printf("\n");
-    
+    printf("%i\n",finish);
+    printf("[\e[36mMETHOD\e[0m] %s\n",daldan.method);
+    printf("[\e[31mREQUEST_URI\e[0m] %s\n",daldan.request_URI);
+    printf("[\e[32mHTTP_VERSION\e[0m] %s\n",daldan.HTTP_version);
 
     // do
     // {

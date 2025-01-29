@@ -17,6 +17,7 @@
 
 struct http_request_requestLine parseRequest(char* request);
 void generateResponse(struct http_request_requestLine request);
+char** getResources();
 
 
 struct http_request_requestLine
@@ -124,6 +125,7 @@ while (1)
     printf("--------------\n");
     struct http_request_requestLine request = parseRequest(recieved_msg);
     generateResponse(request);
+    char** files = getResources();
     printf("--------------\n");
 
     // close(file_dp);
@@ -207,12 +209,13 @@ void generateResponse(struct http_request_requestLine request)
     {
         printf("you requested %s\n",request.request_URI);
     }
+}
 
-    char** files;
-    
-    printf("%s\n",files[0]);
-    printf("%s\n",files[1]);
+char** getResources()
+{
 
+
+    int file_count = 0;
     DIR *d;
     struct dirent *dir;
     d = opendir(".");   //* Code I ctrl c-v to list files in a directory
@@ -220,10 +223,30 @@ void generateResponse(struct http_request_requestLine request)
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG)
         {
-            printf("%s\n", dir->d_name);        
+            file_count++;
         }
       }
       closedir(d);
     }
 
+    char** resources;
+    resources = malloc(sizeof(char*)*file_count);
+
+    int i = 0;
+    d = opendir(".");   //* Code I ctrl c-v to list files in a directory
+    if (d) {
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG)
+        {
+            printf("%s %i\n", dir->d_name,strlen(dir->d_name));
+            *(resources+i) = malloc(strlen(dir->d_name));
+            *(resources+i) = dir->d_name;
+            printf("%s %i\n",*(resources+i),strlen(*(resources+i)));
+            // printf("%c\n",*(*(resources+i)));
+            i++;
+        }
+      }
+      closedir(d);
+    }
+    return resources;
 }

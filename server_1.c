@@ -136,17 +136,13 @@ close(socket_fd);
 
 void generateResponse(char* response,char* request)
 {
-    // int file_dp = open("/home/maqa/C-Http-server/bugg.txt",O_APPEND | O_WRONLY);
-    // FILE * fp = fopen("/home/maqa/C-Http-server/bugg.txt","w");
-    // if(file_dp == 0)
-    // {
-    //     printf("ERROR opening file");
-    //     return;
-    // }
-    struct http_request_requestLine daldan;
-    daldan.method = malloc(4);
-    daldan.HTTP_version = malloc(8);
-    daldan.request_URI = malloc(100);
+    
+    struct http_request_requestLine req;
+    // memset(&req,0,sizeof req);
+    // req = (struct http_request_requestLine*)malloc(sizeof req);
+    req.method = malloc(sizeof req.method);
+    req.HTTP_version = malloc(sizeof req.HTTP_version);
+    req.request_URI = malloc(sizeof req.request_URI);
     
     int flag = 0;
     int finish = 0;
@@ -157,7 +153,7 @@ void generateResponse(char* response,char* request)
         
         if(*request == '\r' && flag == 2)
         {
-            strncpy(daldan.HTTP_version,temp_request,finish);
+            strncpy(req.HTTP_version,temp_request,finish);
             flag++;
             temp_request +=1;
             temp_request = temp_request + finish;
@@ -166,7 +162,7 @@ void generateResponse(char* response,char* request)
 
         if(*request == ' ' && flag == 1)
         {
-            strncpy(daldan.request_URI,temp_request,finish);
+            strncpy(req.request_URI,temp_request,finish);
             flag++;
             // temp_request +=1;
             temp_request = temp_request + finish;
@@ -175,9 +171,9 @@ void generateResponse(char* response,char* request)
 
         if(*request == ' ' && flag == 0)
         {
-            strncpy(daldan.method,temp_request,finish);
+            strncpy(req.method,temp_request,finish);
             flag++;
-            temp_request = temp_request + finish;
+            temp_request = temp_request + finish; 
             temp_request +=1;
             finish = 0;
         }
@@ -199,78 +195,9 @@ void generateResponse(char* response,char* request)
     }
     printf("\n");
     printf("%i\n",finish);
-    printf("[\e[36mMETHOD\e[0m] %s\n",daldan.method);
-    printf("[\e[31mREQUEST_URI\e[0m] %s\n",daldan.request_URI);
-    printf("[\e[32mHTTP_VERSION\e[0m] %s\n",daldan.HTTP_version);
+    printf("[\e[36mMETHOD\e[0m] %s\n",req.method);
+    printf("[\e[31mREQUEST_URI\e[0m] %s\n",req.request_URI);
+    printf("[\e[32mHTTP_VERSION\e[0m] %s\n",req.HTTP_version);
+    printf("\a");
 
-    // do
-    // {
-    //     printf("%i ",*request);
-    //     request = request+1;
-        
-    // }while (*(request-1) !='\n');
-    // printf("\n");
-    
-    
-    // do
-    // {
-    //     printf("%i ",*request);
-    //     request = request+1;
-    // }while (*(request-1) !='\n');
-    // printf("\n");
-    
-    // do
-    // {
-    //     printf("%i ",*request);
-    //     request = request+1;   
-    // }while (*(request-1) !='\n');
-    // printf("\n");
-    
-    // do
-    // {
-    //     printf("%i ",*request);
-    //     request = request+1;   
-    // }while (*(request-1) !='\n');
-    // printf("\n");
-    
-
-    // do
-    // {
-    //     printf("%i ",*request);
-    //     request = request+1;   
-    // }while (*(request-1) !='\n');
-    // printf("\n");
-    
-
-
-
-
-
-
-    // char* buf = malloc(10);
-    // int cnt = 0;
-    // int init = 0;
-    // while (cnt < 4 )
-    // {
-    //     // fprintf(fp,"\e[31m%c\e[0m",*request);
-    //     int read = write(file_dp,request,1);
-    //     if( read <= 0)
-    //     {
-    //         perror ("ERROR WRITING TO THE FILE");
-    //     }
-    //     printf("%c",*request);
-    //     // printf("READ: %d",read);
-    //     // printf("%d -- %c\n",*request,*request);
-        
-    //     // printf("%d",request);
-    //     request = request + 1;
-    //     if(*request == 10)
-    //     {
-    //         cnt++;
-    //         // printf("%d HERE YOU GO %d\n",init,cnt);
-    //         // printf("\e[1m found\e[0m");
-    //     }
-    //     init++;
-    // }
-    
 }

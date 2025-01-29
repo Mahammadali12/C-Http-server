@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -8,11 +10,13 @@
 #include <netdb.h>
 #include <malloc.h>
 #include <fcntl.h>
+#include <time.h>
 
 #define PORT 8080
 #define BUFF_SIZE 1000
 
-void generateResponse(char* response,char* request);
+struct http_request_requestLine parseRequest(char* request);
+void generateResponse(struct http_request_requestLine request);
 
 
 struct http_request_requestLine
@@ -54,12 +58,9 @@ int main (void)
     printf("[\e[1;31mSERVER_SOCKET\e[0m]: %d\n",socket_fd);
 
 
-
-
-
     int opt = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("setsockopt(SO_REUSEADDR) failed");
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { /* with this function OS does not for a few minutes */
+        perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fic BIND() problem
         return(1);
     }
 
@@ -75,10 +76,9 @@ int main (void)
         perror("LISTEN()");
         return(1);
     }
+
 while (1)
 {
-    /* code */
-
 
     int client_fd;
     struct sockaddr_storage dd;
@@ -106,26 +106,28 @@ while (1)
     printf("MESSAGE:\n");
     printf("%s\n",recieved_msg);
 
-    char* response = malloc(BUFF_SIZE);
-    int file_dp;
-    file_dp = open("/home/maqa/C-Http-server/index.html", O_RDONLY);
-    printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
-    int sent_byte = 0;
-    if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
-    {
-        perror("ZERO BYTES WERE SENT");
-        return(1);
-    }
+    // char* response = malloc(BUFF_SIZE);
+    // int file_dp;
+    // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+    // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
+    // int sent_byte = 0;
+    // if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+    // {
+    //     perror("ZERO BYTES WERE SENT");
+    //     return(1);
+    // }
 
-    printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
-    printf("Response:\n");
-    printf("%s\n",response);
+    // printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
+    // printf("Response:\n");
+    // printf("%s\n",response);
+
     printf("--------------\n");
-    generateResponse(response,recieved_msg);
+    struct http_request_requestLine request = parseRequest(recieved_msg);
+    generateResponse(request);
     printf("--------------\n");
 
-    close(file_dp);
-    free(response);
+    // close(file_dp);
+    // free(response);
     close(client_fd);
     free(recieved_msg);
 }
@@ -134,12 +136,10 @@ close(socket_fd);
 }
 
 
-void generateResponse(char* response,char* request)
+struct http_request_requestLine parseRequest(char* request)
 {
     
     struct http_request_requestLine req;
-    // memset(&req,0,sizeof req);
-    // req = (struct http_request_requestLine*)malloc(sizeof req);
     req.method = malloc(sizeof req.method);
     req.HTTP_version = malloc(sizeof req.HTTP_version);
     req.request_URI = malloc(sizeof req.request_URI);
@@ -148,9 +148,7 @@ void generateResponse(char* response,char* request)
     int finish = 0;
     char* temp_request = request;
     while (*(request+2)!='\0')
-    {
-        
-        
+    {        
         if(*request == '\r' && flag == 2)
         {
             strncpy(req.HTTP_version,temp_request,finish);
@@ -162,8 +160,8 @@ void generateResponse(char* response,char* request)
 
         if(*request == ' ' && flag == 1)
         {
-            strncpy(req.request_URI,temp_request,finish);
-            flag++;
+            strncpy(req.request_URI,temp_request,finish-1);  // ! TODO: why I need -1 in the strncpy() function in order to remove space at the end of string
+            flag++;                                             
             // temp_request +=1;
             temp_request = temp_request + finish;
             finish = 0;
@@ -178,14 +176,6 @@ void generateResponse(char* response,char* request)
             finish = 0;
         }
 
-
-        // if(*request == ' ' && flag == 2)
-        // {
-        //     strncpy(daldan.method,temp_request,finish);
-        //     flag++;
-        //     temp_request = temp_request + finish;
-        // }
-
         finish ++;
 
         printf("%i ",*request);
@@ -194,10 +184,46 @@ void generateResponse(char* response,char* request)
         request = request+1;
     }
     printf("\n");
-    printf("%i\n",finish);
+
+    // time_t t;
+    // time(&t);   // @bug VERY DANGEROUS!!!! INSPECT BEFORE USING
+    // printf("NOW IS %s\n",ctime(&t));
+
     printf("[\e[36mMETHOD\e[0m] %s\n",req.method);
     printf("[\e[31mREQUEST_URI\e[0m] %s\n",req.request_URI);
     printf("[\e[32mHTTP_VERSION\e[0m] %s\n",req.HTTP_version);
-    printf("\a");
+    return req;
+    
+}
+
+
+void generateResponse(struct http_request_requestLine request)
+{
+    if(strcmp(request.request_URI,"/index.html") == 0)
+    {
+        printf("Here is your %s [\e[1;32mSTATUS CODE\e[0m]: 200 OK\n",request.request_URI+1); // * +1 for request.request_URI is to remove "/"
+    }
+    else
+    {
+        printf("you requested %s\n",request.request_URI);
+    }
+
+    char** files;
+    
+    printf("%s\n",files[0]);
+    printf("%s\n",files[1]);
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(".");   //* Code I ctrl c-v to list files in a directory
+    if (d) {
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG)
+        {
+            printf("%s\n", dir->d_name);        
+        }
+      }
+      closedir(d);
+    }
 
 }

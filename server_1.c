@@ -16,8 +16,9 @@
 #define BUFF_SIZE 1000
 
 struct http_request_requestLine parseRequest(char* request);
-void generateResponse(struct http_request_requestLine request);
-char** getResources();
+void generateResponse(struct http_request_requestLine request,char** files,int file_count);
+char** getResources(int* file_count);
+
 
 
 struct http_request_requestLine
@@ -60,7 +61,7 @@ int main (void)
 
 
     int opt = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { /* with this function OS does not for a few minutes */
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { //* with this function OS does not for a few minutes */
         perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fic BIND() problem
         return(1);
     }
@@ -77,6 +78,10 @@ int main (void)
         perror("LISTEN()");
         return(1);
     }
+
+        int file_count = 0;
+        char** files = getResources(&file_count);
+        printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
 while (1)
 {
@@ -124,8 +129,7 @@ while (1)
 
     printf("--------------\n");
     struct http_request_requestLine request = parseRequest(recieved_msg);
-    generateResponse(request);
-    char** files = getResources();
+    generateResponse(request,files,file_count);
     printf("--------------\n");
 
     // close(file_dp);
@@ -142,9 +146,9 @@ struct http_request_requestLine parseRequest(char* request)
 {
     
     struct http_request_requestLine req;
-    req.method = malloc(sizeof req.method);
-    req.HTTP_version = malloc(sizeof req.HTTP_version);
-    req.request_URI = malloc(sizeof req.request_URI);
+    req.method = malloc(256);
+    req.HTTP_version = malloc(256);
+    req.request_URI = malloc(256);
     
     int flag = 0;
     int finish = 0;
@@ -153,25 +157,28 @@ struct http_request_requestLine parseRequest(char* request)
     {        
         if(*request == '\r' && flag == 2)
         {
-            strncpy(req.HTTP_version,temp_request,finish);
+            strncpy(req.HTTP_version-1,temp_request,finish);
             flag++;
-            temp_request +=1;
-            temp_request = temp_request + finish;
+            *(req.HTTP_version+finish-1) ='\0'; 
+            // temp_request +=1;
+            // temp_request = temp_request + finish;
             break;
         }
 
         if(*request == ' ' && flag == 1)
         {
             strncpy(req.request_URI,temp_request,finish-1);  // ! TODO: why I need -1 in the strncpy() function in order to remove space at the end of string
+            *(req.request_URI+finish-1) = '\0';
             flag++;                                             
             // temp_request +=1;
-            temp_request = temp_request + finish;
+            temp_request = temp_request + finish-1;
             finish = 0;
         }
 
         if(*request == ' ' && flag == 0)
         {
             strncpy(req.method,temp_request,finish);
+            *(req.method+finish) = '\0'; 
             flag++;
             temp_request = temp_request + finish; 
             temp_request +=1;
@@ -194,28 +201,53 @@ struct http_request_requestLine parseRequest(char* request)
     printf("[\e[36mMETHOD\e[0m] %s\n",req.method);
     printf("[\e[31mREQUEST_URI\e[0m] %s\n",req.request_URI);
     printf("[\e[32mHTTP_VERSION\e[0m] %s\n",req.HTTP_version);
+    // printf("1--%i\n",strlen(req.method));
+    // printf("2--%i\n",strlen(req.request_URI));
+    // printf("3--%i\n",strlen(req.HTTP_version));
     return req;
     
 }
 
+void generateResponse(struct http_request_requestLine request,char** files,int file_count)
+{   
+    // if(strcmp(request.request_URI,"/index.html") == 0)
+    // {
+    //     printf("Here is your %s [\e[1;32mSTATUS CODE\e[0m]: 200 OK\n",request.request_URI+1); // * +1 for request.request_URI is to remove "/"
+    // }
+    // else
+    // {
+    //     printf("you requested %s\n",request.request_URI);
+    // }
 
-void generateResponse(struct http_request_requestLine request)
-{
-    if(strcmp(request.request_URI,"/index.html") == 0)
+    char** temp_files = files;
+
+    for (int i = 0; i < file_count; i++)
     {
-        printf("Here is your %s [\e[1;32mSTATUS CODE\e[0m]: 200 OK\n",request.request_URI+1); // * +1 for request.request_URI is to remove "/"
+        // printf("\e[31m%s\n\e[0m",*(temp_files+i));
+        // if(strcmp(request.request_URI+1,*(temp_files+i)) == 0)
+        // {
+        //     printf("\e[1;32m HER IS YOUR FILE %s\n\e[0m",*(temp_files+i));
+        //     break;
+        // }
+        printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
+        printf("%i\n",strcmp(request.request_URI+1,*(temp_files+i))); // * +1 for request.request_URI is to remove "/"
+        
     }
-    else
-    {
-        printf("you requested %s\n",request.request_URI);
-    }
+
+    // for (int i = 1; i < file_count; i++)
+    // {
+    //     free(*(files+i));
+    // }
+    
+
+
 }
 
-char** getResources()
+char** getResources(int* file_count)
 {
 
 
-    int file_count = 0;
+    // int file_count = 0;
     DIR *d;
     struct dirent *dir;
     d = opendir(".");   //* Code I ctrl c-v to list files in a directory
@@ -223,14 +255,14 @@ char** getResources()
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG)
         {
-            file_count++;
+            (*file_count)++;
         }
       }
       closedir(d);
     }
 
     char** resources;
-    resources = malloc(sizeof(char*)*file_count);
+    resources = malloc(sizeof(char*)*(*file_count));
 
     int i = 0;
     d = opendir(".");   //* Code I ctrl c-v to list files in a directory
@@ -238,7 +270,7 @@ char** getResources()
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG)
         {
-            printf("%s %i\n", dir->d_name,strlen(dir->d_name));
+            // printf("%s %i\n", dir->d_name,strlen(dir->d_name));
             *(resources+i) = malloc(strlen(dir->d_name));
             *(resources+i) = dir->d_name;
             printf("%s %i\n",*(resources+i),strlen(*(resources+i)));

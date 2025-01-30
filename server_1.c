@@ -16,7 +16,7 @@
 #define BUFF_SIZE 1000
 
 struct http_request_requestLine parseRequest(char* request);
-void generateResponse(struct http_request_requestLine request,char** files,int file_count);
+char* generateResponse(struct http_request_requestLine request,char** files,int file_count);
 char** getResources(int* file_count);
 
 
@@ -61,8 +61,8 @@ int main (void)
 
 
     int opt = 1;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { //* with this function OS does not for a few minutes */
-        perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fic BIND() problem
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { //* with this function OS does not wait for a few minutes */
+        perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fix BIND() problem
         return(1);
     }
 
@@ -112,24 +112,27 @@ while (1)
     printf("MESSAGE:\n");
     printf("%s\n",recieved_msg);
 
-    // char* response = malloc(BUFF_SIZE);
+    char* response = malloc(BUFF_SIZE);
     // int file_dp;
     // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
     // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
-    // int sent_byte = 0;
-    // if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
-    // {
-    //     perror("ZERO BYTES WERE SENT");
-    //     return(1);
-    // }
 
-    // printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
-    // printf("Response:\n");
-    // printf("%s\n",response);
+    struct http_request_requestLine request = parseRequest(recieved_msg);
+
+    response = generateResponse(request,files,file_count);
+    int sent_byte = 0;
+    if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+    {
+        perror("ZERO BYTES WERE SENT");
+        return(1);
+    }
+
+    printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
+    printf("Response:\n");
+    printf("%s\n",response);
 
     printf("--------------\n");
-    struct http_request_requestLine request = parseRequest(recieved_msg);
-    generateResponse(request,files,file_count);
+
     printf("--------------\n");
 
     // close(file_dp);
@@ -208,7 +211,7 @@ struct http_request_requestLine parseRequest(char* request)
     
 }
 
-void generateResponse(struct http_request_requestLine request,char** files,int file_count)
+char* generateResponse(struct http_request_requestLine request,char** files,int file_count)
 {   
     // if(strcmp(request.request_URI,"/index.html") == 0)
     // {
@@ -218,29 +221,29 @@ void generateResponse(struct http_request_requestLine request,char** files,int f
     // {
     //     printf("you requested %s\n",request.request_URI);
     // }
-
+    char* response = malloc(100);
     char** temp_files = files;
 
     for (int i = 0; i < file_count; i++)
     {
-        // printf("\e[31m%s\n\e[0m",*(temp_files+i));
-        // if(strcmp(request.request_URI+1,*(temp_files+i)) == 0)
-        // {
-        //     printf("\e[1;32m HER IS YOUR FILE %s\n\e[0m",*(temp_files+i));
-        //     break;
-        // }
+        if(strcmp(request.request_URI+1,*(temp_files+i)) == 0) // * +1 for request.request_URI is to remove "/"
+        {
+            printf("[\e[1;32m200 OK\e[0m] %s\n",*(temp_files+i));
+            sprintf(response,"%s 200 OK\r\n",request.HTTP_version);
+            return response;
+        }
         printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
         printf("%i\n",strcmp(request.request_URI+1,*(temp_files+i))); // * +1 for request.request_URI is to remove "/"
-        
     }
 
+    printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
+    sprintf(response,"%s 404 NOT FOUND ZUHAHAHA\r\n",request.HTTP_version);
+    return response;
+    
     // for (int i = 1; i < file_count; i++)
     // {
-    //     free(*(files+i));
+    //     free(*(files+i));  //! TODO: FREE MEMORY OF THE FILE NAMES !!!
     // }
-    
-
-
 }
 
 char** getResources(int* file_count)
@@ -272,7 +275,8 @@ char** getResources(int* file_count)
         {
             // printf("%s %i\n", dir->d_name,strlen(dir->d_name));
             *(resources+i) = malloc(strlen(dir->d_name));
-            *(resources+i) = dir->d_name;
+            // /   *(resources+i) = dir->d_name;
+            strcpy(*(resources+i),dir->d_name);
             printf("%s %i\n",*(resources+i),strlen(*(resources+i)));
             // printf("%c\n",*(*(resources+i)));
             i++;

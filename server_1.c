@@ -109,8 +109,8 @@ while (1)
     // }
 
     printf("%d bytes were received from client:%d\n",received_byte,client_fd);
-    printf("MESSAGE:\n");
-    printf("%s\n",recieved_msg);
+    // printf("MESSAGE:\n");
+    // printf("%s\n",recieved_msg);
 
     char* response = malloc(BUFF_SIZE);
     // int file_dp;
@@ -129,7 +129,7 @@ while (1)
 
     printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
     printf("Response:\n");
-    printf("%s\n",response);
+    printf("%s",response);
 
     printf("--------------\n");
 
@@ -221,23 +221,33 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
     // {
     //     printf("you requested %s\n",request.request_URI);
     // }
-    char* response = malloc(100);
+    char* response = malloc(1000);
     char** temp_files = files;
 
     for (int i = 0; i < file_count; i++)
     {
         if(strcmp(request.request_URI+1,*(temp_files+i)) == 0) // * +1 for request.request_URI is to remove "/"
         {
-            printf("[\e[1;32m200 OK\e[0m] %s\n",*(temp_files+i));
-            sprintf(response,"%s 200 OK\r\n",request.HTTP_version);
+            // printf("[\e[1;32m200 OK\e[0m] %s\n",*(temp_files+i));
+            char* response_body = malloc(1000);
+            int file_dp;
+            file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+            printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
+            sprintf(response,"%s 200 OK\r\n\n%s",request.HTTP_version,response_body);
             return response;
         }
-        printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
-        printf("%i\n",strcmp(request.request_URI+1,*(temp_files+i))); // * +1 for request.request_URI is to remove "/"
+        // printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
+        // printf("%i\n",strcmp(request.request_URI+1,*(temp_files+i))); // * +1 for request.request_URI is to remove "/"
     }
 
-    printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
-    sprintf(response,"%s 404 NOT FOUND ZUHAHAHA\r\n",request.HTTP_version);
+    // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
+    
+    char* response_body = malloc(1000);
+    int file_dp;
+    file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+    sprintf(response,"%s 404 NOT FOUND\r\n%s\n",request.HTTP_version);
+    
+
     return response;
     
     // for (int i = 1; i < file_count; i++)
@@ -253,7 +263,7 @@ char** getResources(int* file_count)
     // int file_count = 0;
     DIR *d;
     struct dirent *dir;
-    d = opendir(".");   //* Code I ctrl c-v to list files in a directory
+    d = opendir("./resources");   //* Code I ctrl c-v to list files in a directory
     if (d) {
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG)
@@ -268,7 +278,7 @@ char** getResources(int* file_count)
     resources = malloc(sizeof(char*)*(*file_count));
 
     int i = 0;
-    d = opendir(".");   //* Code I ctrl c-v to list files in a directory
+    d = opendir("./resources");   //* Code I ctrl c-v to list files in a directory
     if (d) {
       while ((dir = readdir(d)) != NULL) {
         if (dir->d_type == DT_REG)
@@ -277,7 +287,7 @@ char** getResources(int* file_count)
             *(resources+i) = malloc(strlen(dir->d_name));
             // /   *(resources+i) = dir->d_name;
             strcpy(*(resources+i),dir->d_name);
-            printf("%s %i\n",*(resources+i),strlen(*(resources+i)));
+            // printf("%s %i\n",*(resources+i),strlen(*(resources+i)));
             // printf("%c\n",*(*(resources+i)));
             i++;
         }

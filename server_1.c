@@ -16,10 +16,9 @@
 #define BUFF_SIZE 1000
 
 struct http_request_requestLine parseRequest(char* request);
-char* generateResponse(struct http_request_requestLine request,char** files,int file_count);
+char* generateResponse(struct http_request_requestLine request,char** files,int file_count,char* date);
 char** getResources(int* file_count);
-
-
+void getCurrentTime(char* d);
 
 struct http_request_requestLine
 {
@@ -32,6 +31,9 @@ struct http_request_requestLine
 
 int main (void)
 {
+    char* date = malloc(128);
+    getCurrentTime(date);
+
     int socket_fd;
     struct sockaddr_in addr;
 
@@ -102,7 +104,7 @@ while (1)
 
     // if((
         received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
-        // ) == 0)
+    //     ) == 0)
     // {       
     //     perror("ZERO BYTES WERE RECEIVED");
     //     return(1);
@@ -119,7 +121,7 @@ while (1)
 
     struct http_request_requestLine request = parseRequest(recieved_msg);
 
-    response = generateResponse(request,files,file_count);
+    response = generateResponse(request,files,file_count,date);
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
     {
@@ -211,16 +213,9 @@ struct http_request_requestLine parseRequest(char* request)
     
 }
 
-char* generateResponse(struct http_request_requestLine request,char** files,int file_count)
+char* generateResponse(struct http_request_requestLine request,char** files,int file_count,char* date)
 {   
-    // if(strcmp(request.request_URI,"/index.html") == 0)
-    // {
-    //     printf("Here is your %s [\e[1;32mSTATUS CODE\e[0m]: 200 OK\n",request.request_URI+1); // * +1 for request.request_URI is to remove "/"
-    // }
-    // else
-    // {
-    //     printf("you requested %s\n",request.request_URI);
-    // }
+    
     char* response = malloc(1000);
     char** temp_files = files;
 
@@ -233,7 +228,7 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
             int file_dp;
             file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
             printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
-            sprintf(response,"%s 200 OK\r\n\n%s",request.HTTP_version,response_body);
+            sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
             return response;
         }
         // printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
@@ -242,10 +237,10 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
 
     // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
     
-    char* response_body = malloc(1000);
-    int file_dp;
-    file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
-    sprintf(response,"%s 404 NOT FOUND\r\n%s\n",request.HTTP_version);
+    // char* response_body = malloc(1000);
+    // int file_dp;
+    // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+    sprintf(response,"%s 404 NOT FOUND\r\n",request.HTTP_version);
     
 
     return response;
@@ -295,4 +290,20 @@ char** getResources(int* file_count)
       closedir(d);
     }
     return resources;
+}
+
+void getCurrentTime(char* d)
+{
+        // Get the current time
+    time_t now = time(NULL);
+    struct tm *tm = gmtime(&now);
+
+    // Buffer to hold the formatted date
+    char date_str[128];
+    // Format the time according to RFC 1123
+    strftime(date_str, sizeof(date_str), "%a, %d %b %Y %H:%M:%S GMT", tm);
+
+    // Print the formatted date
+    // printf("Date: %s\n", date_str);
+    strcpy(d,date_str);
 }

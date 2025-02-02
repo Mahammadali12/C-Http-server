@@ -19,6 +19,7 @@ struct http_request_requestLine parseRequest(char* request);
 char* generateResponse(struct http_request_requestLine request,char** files,int file_count,char* date);
 char** getResources(int* file_count);
 void getCurrentTime(char* d);
+void parseRequest_TEST(char* request);
 
 struct http_request_requestLine
 {
@@ -111,8 +112,8 @@ while (1)
     // }
 
     printf("%d bytes were received from client:%d\n",received_byte,client_fd);
-    // printf("MESSAGE:\n");
-    // printf("%s\n",recieved_msg);
+    printf("MESSAGE:\n");
+    printf("%s\n",recieved_msg);
 
     char* response = malloc(BUFF_SIZE);
     // int file_dp;
@@ -136,7 +137,7 @@ while (1)
     printf("--------------\n");
 
     printf("--------------\n");
-
+    parseRequest_TEST(recieved_msg);
     // close(file_dp);
     // free(response);
     close(client_fd);
@@ -294,7 +295,7 @@ char** getResources(int* file_count)
     return resources;
 }
 
-void getCurrentTime(char* d)
+void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do not edit
 {
         // Get the current time
     time_t now = time(NULL);
@@ -308,4 +309,26 @@ void getCurrentTime(char* d)
     // Print the formatted date
     // printf("Date: %s\n", date_str);
     strcpy(d,date_str);
+}
+
+void parseRequest_TEST(char* request)
+{
+    char* request_temp = request;
+    int cnt = 0;
+    int finish = 0;
+    char* test = malloc(100);
+    while (*request_temp != '\0' )
+    {
+        if(*(request_temp+1) == '\n' && *(request_temp) == '\r')
+        {
+            strncpy(test,request,finish);
+            break;
+        }
+        finish++;
+        // printf("%c",*request_temp);
+        request_temp++;
+    }
+    printf("%s\n",test);
+    // printf("%i\n",cnt);
+    
 }

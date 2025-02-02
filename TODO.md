@@ -1,2 +1,0 @@
-- [ ] I/O Multiplexing: Handling Several Sockets Without Blocking
-- [ ] HTTP 0.9

@@ -12,7 +12,8 @@
       "malloc.h": "c",
       "dirent.h": "c",
       "errno.h": "c",
-      "limits.h": "c"
+      "limits.h": "c",
+      "string.h": "c"
     },
     "better-comments.multilineComments": true,
     "better-comments.highlightPlainText": true,

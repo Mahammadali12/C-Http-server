@@ -29,6 +29,14 @@ struct http_request_requestLine
 };
 
 
+struct http_request
+{
+    struct http_request_requestLine requestLine;
+    char* Host;
+    char* Connection;
+};
+
+
 
 int main (void)
 {
@@ -313,6 +321,10 @@ void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do n
 
 void parseRequest_TEST(char* request)
 {
+
+    struct http_request ht_request;
+    ht_request.Host = malloc(50);
+
     char* request_temp = request;
     int cnt = 0;
     int finish = 0;
@@ -321,14 +333,30 @@ void parseRequest_TEST(char* request)
     {
         if(*(request_temp+1) == '\n' && *(request_temp) == '\r')
         {
-            strncpy(test,request,finish);
-            break;
+            if(strncmp("Connection",request_temp+2,10) == 0 )
+            {
+                // printf("%c--%c--%c\n",*(request_temp+2),*(request_temp+3),*(request_temp+4));
+                request_temp++;
+                request_temp++;
+                for (int i = 0; i < 10; i++)
+                {
+                    printf("%c",*(request_temp++));
+                }
+                printf("\n");
+
+            }
+            else
+            {
+                printf("DALDAN\n");
+            }
+            // printf("%c--%c--%c\n",*(request_temp+2),*(request_temp+3),*(request_temp+4));
+
         }
         finish++;
         // printf("%c",*request_temp);
         request_temp++;
     }
-    printf("%s\n",test);
+    // printf("%s\n",test);
     // printf("%i\n",cnt);
     
 }

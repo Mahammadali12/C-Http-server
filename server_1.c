@@ -226,7 +226,9 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
             // printf("[\e[1;32m200 OK\e[0m] %s\n",*(temp_files+i));
             char* response_body = malloc(1000);
             int file_dp;
-            file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+            char* file_path = malloc(50);
+            sprintf(file_path,"/home/maqa/C-Http-server/resources/%s",request.request_URI+1);
+            file_dp = open(file_path, O_RDONLY);
             printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
             sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
             return response;

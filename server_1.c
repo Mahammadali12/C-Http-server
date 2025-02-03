@@ -89,69 +89,92 @@ int main (void)
         return(1);
     }
 
-        int file_count = 0;
-        char** files = getResources(&file_count);
-        printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
+    int file_count = 0;
+    char** files = getResources(&file_count); //!    TODO:   free() array of file names 
+    printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
-while (1)
-{
-
-    int client_fd;
-    struct sockaddr_storage dd;
-    socklen_t addrlen;
-    if ((client_fd = accept(socket_fd,(struct sockaddr*)&addr,&addrlen)) == -1)
+    while (1)
     {
-        perror("ACCEPT()");
-        return(1);
+
+        int client_fd;
+        struct sockaddr_storage dd;
+        socklen_t addrlen;
+        if ((client_fd = accept(socket_fd,(struct sockaddr*)&addr,&addrlen)) == -1)
+        {
+            perror("ACCEPT()");
+            return(1);
+        }
+
+        printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
+
+        char* recieved_msg = malloc(BUFF_SIZE);
+        int received_byte;
+
+        // if((
+            received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
+        //     ) == 0)
+        // {       
+        //     perror("ZERO BYTES WERE RECEIVED");
+        //     return(1);
+        // }
+
+        printf("%d bytes were received from client:%d\n",received_byte,client_fd);
+        printf("MESSAGE:\n");
+        printf("%s\n",recieved_msg);
+
+        char* response = malloc(BUFF_SIZE);
+        // int file_dp;
+        // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
+        // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
+
+        struct http_request_requestLine request = parseRequest(recieved_msg);
+
+        response = generateResponse(request,files,file_count,date);
+        int sent_byte = 0;
+        if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+        {
+            perror("ZERO BYTES WERE SENT");
+            return(1);
+        }
+
+        printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
+        printf("Response:\n");
+        printf("%s",response);
+
+        printf("--------------\n");
+
+        printf("--------------\n");
+        struct http_request rq = parseRequest_TEST(recieved_msg);
+        printf("Connection: %s\n",rq.Connection);
+        printf("Host: %s\n",rq.Host);
+        if(strcmp(rq.Connection,"close") == 0)
+        break;
+        // close(file_dp);
+        // free(response);
+        close(client_fd);
+
+        // free(response);
+        free(recieved_msg);
+
+        free(rq.Connection);
+        free(rq.Host);
+
+        free(request.request_URI);
+        free(request.method);
+        free(request.HTTP_version);
+        // free(request.HTTP_version);
     }
 
-    printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
 
-    char* recieved_msg = malloc(BUFF_SIZE);
-    int received_byte;
-
-    // if((
-        received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
-    //     ) == 0)
-    // {       
-    //     perror("ZERO BYTES WERE RECEIVED");
-    //     return(1);
+    free(date);
+    // for (size_t i = 1; i < file_count; i++)
+    // {
+    //     free(*(files+i));
     // }
+    // free(files);
 
-    printf("%d bytes were received from client:%d\n",received_byte,client_fd);
-    printf("MESSAGE:\n");
-    printf("%s\n",recieved_msg);
-
-    char* response = malloc(BUFF_SIZE);
-    // int file_dp;
-    // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
-    // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
-
-    struct http_request_requestLine request = parseRequest(recieved_msg);
-
-    response = generateResponse(request,files,file_count,date);
-    int sent_byte = 0;
-    if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
-    {
-        perror("ZERO BYTES WERE SENT");
-        return(1);
-    }
-
-    printf("%d bytes were sent as a response to the client(%d)\n",sent_byte,client_fd);
-    printf("Response:\n");
-    printf("%s",response);
-
-    printf("--------------\n");
-
-    printf("--------------\n");
-    printf("%s\n",parseRequest_TEST(recieved_msg).Host);
-    // close(file_dp);
-    // free(response);
-    close(client_fd);
-    free(recieved_msg);
-}
-
-close(socket_fd);
+    
+    close(socket_fd);
 }
 
 
@@ -170,7 +193,7 @@ struct http_request_requestLine parseRequest(char* request)
     {        
         if(*request == '\r' && flag == 2)
         {
-            strncpy(req.HTTP_version-1,temp_request,finish);
+            strncpy(req.HTTP_version,temp_request,finish+1); // ? HERE 
             flag++;
             *(req.HTTP_version+finish-1) ='\0'; 
             // temp_request +=1;
@@ -184,7 +207,7 @@ struct http_request_requestLine parseRequest(char* request)
             *(req.request_URI+finish-1) = '\0';
             flag++;                                             
             // temp_request +=1;
-            temp_request = temp_request + finish-1;
+            temp_request = temp_request + finish;
             finish = 0;
         }
 
@@ -224,7 +247,7 @@ struct http_request_requestLine parseRequest(char* request)
 char* generateResponse(struct http_request_requestLine request,char** files,int file_count,char* date)
 {   
     
-    char* response = malloc(1000);
+    char* response = malloc(500);
     char** temp_files = files;
 
     for (int i = 0; i < file_count; i++)
@@ -239,6 +262,11 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
             file_dp = open(file_path, O_RDONLY);
             printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
             sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
+
+            free(response_body);
+            free(file_path);
+            close(file_dp);
+
             return response;
         }
         // printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
@@ -247,11 +275,15 @@ char* generateResponse(struct http_request_requestLine request,char** files,int 
 
     // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
     
-    // char* response_body = malloc(1000);
-    // int file_dp;
-    // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
-    sprintf(response,"%s 404 NOT FOUND\r\n",request.HTTP_version);
+    char* response_body = malloc(1000);
+    int file_dp;
+    file_dp = open("/home/maqa/C-Http-server/resources/404.html", O_RDONLY);
+    printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
+    sprintf(response,"%s 404 NOT FOUND\r\n%s\n\n%s",request.HTTP_version,date,response_body);
     
+
+    free(response_body);
+    close(file_dp);
 
     return response;
     
@@ -348,7 +380,7 @@ struct http_request parseRequest_TEST(char* request)
                 
                 ht_request.Connection = malloc(length);
                 strncpy(ht_request.Connection,request_temp-length,length+1); //* be careful for +1 
-                printf("%s\n",ht_request.Connection);
+                // printf("%s\n",ht_request.Connection);
                 // printf("Connection %d\n",length);
                 length = 0;
             }
@@ -368,7 +400,7 @@ struct http_request parseRequest_TEST(char* request)
                 ht_request.Host = malloc(length);
                 strncpy(ht_request.Host,request_temp-length,length+1); //* be careful for +1 
                 
-                printf("%s\n",ht_request.Host);
+                // printf("%s\n",ht_request.Host);
                 // printf("Host %d\n",length);
                 length = 0;
             }

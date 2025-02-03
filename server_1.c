@@ -19,7 +19,7 @@ struct http_request_requestLine parseRequest(char* request);
 char* generateResponse(struct http_request_requestLine request,char** files,int file_count,char* date);
 char** getResources(int* file_count);
 void getCurrentTime(char* d);
-void parseRequest_TEST(char* request);
+struct http_request parseRequest_TEST(char* request);
 
 struct http_request_requestLine
 {
@@ -31,7 +31,6 @@ struct http_request_requestLine
 
 struct http_request
 {
-    struct http_request_requestLine requestLine;
     char* Host;
     char* Connection;
 };
@@ -145,7 +144,7 @@ while (1)
     printf("--------------\n");
 
     printf("--------------\n");
-    parseRequest_TEST(recieved_msg);
+    printf("%s\n",parseRequest_TEST(recieved_msg).Host);
     // close(file_dp);
     // free(response);
     close(client_fd);
@@ -319,7 +318,7 @@ void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do n
     strcpy(d,date_str);
 }
 
-void parseRequest_TEST(char* request)
+struct http_request parseRequest_TEST(char* request)
 {
 
     struct http_request ht_request;
@@ -327,36 +326,65 @@ void parseRequest_TEST(char* request)
 
     char* request_temp = request;
     int cnt = 0;
-    int finish = 0;
+    int length = 0;
     char* test = malloc(100);
     while (*request_temp != '\0' )
     {
         if(*(request_temp+1) == '\n' && *(request_temp) == '\r')
         {
-            if(strncmp("Connection",request_temp+2,10) == 0 )
+            request_temp++;
+            request_temp++;
+            if(strncmp("Connection",request_temp,10) == 0 )
             {
                 // printf("%c--%c--%c\n",*(request_temp+2),*(request_temp+3),*(request_temp+4));
+                for (int i = 0; i < 12; i++)
                 request_temp++;
-                request_temp++;
-                for (int i = 0; i < 10; i++)
-                {
-                    printf("%c",*(request_temp++));
-                }
-                printf("\n");
 
+                while( *(request_temp+1) != '\r')
+                {
+                    request_temp++; 
+                    length++;
+                }
+                
+                ht_request.Connection = malloc(length);
+                strncpy(ht_request.Connection,request_temp-length,length+1); //* be careful for +1 
+                printf("%s\n",ht_request.Connection);
+                // printf("Connection %d\n",length);
+                length = 0;
             }
-            else
+            if (strncmp("Host",request_temp,4) == 0)
             {
-                printf("DALDAN\n");
+                // printf("%c--%c--%c\n",*(request_temp),*(request_temp+1),*(request_temp+2));
+                for (int i = 0; i < 6; i++)
+                request_temp++;
+
+                while(*(request_temp+1) != '\r')
+                {
+                    request_temp++;
+                    length++;
+
+                }
+
+                ht_request.Host = malloc(length);
+                strncpy(ht_request.Host,request_temp-length,length+1); //* be careful for +1 
+                
+                printf("%s\n",ht_request.Host);
+                // printf("Host %d\n",length);
+                length = 0;
             }
+            // else
+            // {
+                // printf("DALDAN\n");
+            // }
             // printf("%c--%c--%c\n",*(request_temp+2),*(request_temp+3),*(request_temp+4));
 
         }
-        finish++;
         // printf("%c",*request_temp);
         request_temp++;
     }
     // printf("%s\n",test);
     // printf("%i\n",cnt);
+    return ht_request;
     
 }
+

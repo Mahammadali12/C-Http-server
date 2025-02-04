@@ -93,8 +93,8 @@ int main (void)
     char** files = getResources(&file_count); //!    TODO:   free() array of file names 
     printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
-    while (1)
-    {
+    // while (1)
+    // {
 
         int client_fd;
         struct sockaddr_storage dd;
@@ -122,7 +122,7 @@ int main (void)
         printf("MESSAGE:\n");
         printf("%s\n",recieved_msg);
 
-        char* response = malloc(BUFF_SIZE);
+        char* response;
         // int file_dp;
         // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
         // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
@@ -147,14 +147,15 @@ int main (void)
         struct http_request rq = parseRequest_TEST(recieved_msg);
         printf("Connection: %s\n",rq.Connection);
         printf("Host: %s\n",rq.Host);
-        if(strcmp(rq.Connection,"close") == 0)
-        break;
+        // if(strcmp(rq.Connection,"close") == 0)
+        // break;
         // close(file_dp);
         // free(response);
         close(client_fd);
 
-        // free(response);
         free(recieved_msg);
+
+        free(response);
 
         free(rq.Connection);
         free(rq.Host);
@@ -163,15 +164,17 @@ int main (void)
         free(request.method);
         free(request.HTTP_version);
         // free(request.HTTP_version);
-    }
+    // }
 
 
     free(date);
-    // for (size_t i = 1; i < file_count; i++)
-    // {
-    //     free(*(files+i));
-    // }
-    // free(files);
+    shutdown(socket_fd,SHUT_RDWR);
+
+    for (size_t i = 0; i < file_count; i++)
+    {
+        free(*(files+i));
+    }
+    free(files);
 
     
     close(socket_fd);
@@ -354,12 +357,12 @@ struct http_request parseRequest_TEST(char* request)
 {
 
     struct http_request ht_request;
-    ht_request.Host = malloc(50);
+    // ht_request.Host = malloc(50);
 
     char* request_temp = request;
     int cnt = 0;
     int length = 0;
-    char* test = malloc(100);
+    // char* test = malloc(100);
     while (*request_temp != '\0' )
     {
         if(*(request_temp+1) == '\n' && *(request_temp) == '\r')

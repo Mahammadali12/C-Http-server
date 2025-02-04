@@ -93,8 +93,8 @@ int main (void)
     char** files = getResources(&file_count); //!    TODO:   free() array of file names 
     printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
-    // while (1)
-    // {
+    while (1)
+    {
 
         int client_fd;
         struct sockaddr_storage dd;
@@ -147,10 +147,9 @@ int main (void)
         struct http_request rq = parseRequest_TEST(recieved_msg);
         printf("Connection: %s\n",rq.Connection);
         printf("Host: %s\n",rq.Host);
-        // if(strcmp(rq.Connection,"close") == 0)
-        // break;
+        if(strcmp(rq.Connection,"close") == 0)
+        break;
         // close(file_dp);
-        // free(response);
         close(client_fd);
 
         free(recieved_msg);
@@ -163,8 +162,7 @@ int main (void)
         free(request.request_URI);
         free(request.method);
         free(request.HTTP_version);
-        // free(request.HTTP_version);
-    // }
+    }
 
 
     free(date);

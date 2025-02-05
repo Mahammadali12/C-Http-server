@@ -3,7 +3,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <malloc.h>
 
 int main()
 {
@@ -26,10 +26,22 @@ int main()
         perror("CONNECT()");
     }
 
-    char* buf = malloc(10);
-    printf("%d\n",recv(client_socket,buf,5,0));
+    char* buffer = malloc(512);
+    int bytes_received = 0;
+    // printf("%d\n",recv(client_socket,buf,5,0));
 
-    printf("%s\n",buf);
+    while ((bytes_received = recv(client_socket,buffer,512,0)) != 0 )
+    {
+        printf("\e[1m%d\e[0m bytes were received.\n",bytes_received);
+
+        printf("%s\n",buffer);
+        printf("-------\n");
+        free(buffer);
+        buffer = malloc(512);
+    }
+    
+
+    // printf("%s\n",buf);
     
 
 }

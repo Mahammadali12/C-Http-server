@@ -3,6 +3,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <malloc.h>
 
 
 int main()
@@ -53,14 +55,32 @@ int main()
 
     printf("CLIENT: %d\n",client_socket);
 
-    printf("%d\n",send(client_socket,"SALAM",5,0));
 
 
 
+    int file_dp = open("/home/maqa/C-Http-server/resources/test.txt", O_RDONLY);
+    int bytes_read = 0;
+    char* buffer = malloc(512);
 
 
+    while ((bytes_read = read(file_dp,buffer,512)) != 0)
+    {
+        
+        printf("\e[1m%d\e[0m bytes were read\n",bytes_read);
 
+        // printf("%s\n",buffer);
+        printf("\e[1m%d\e[0m bytes were sent\n",send(client_socket,buffer,strlen(buffer),0));
 
+        printf("--------\n");
+
+        free(buffer);
+
+        buffer = malloc(512);
+
+        sleep(3);
+    }
+    
+    free(buffer);
 
 
 

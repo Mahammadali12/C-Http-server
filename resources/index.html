@@ -4,7 +4,7 @@
     <link rel="icon" href="data:,">
 </head>
 <body>
-    <h1>Hello, World!</h1>
+    <h1 id="data">Hello, World!</h1>
     <p>This is an HTTP/1.0 response.</p>
     <img src="https://rb.gy/tdkbwz">
     <p>This is a large HTML file with a size of approximately 5 MB.</p>
@@ -22,5 +22,21 @@
     <p style="color:rgb(209, 228, 100)">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
     <p style="color:magenta">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
     <p style="color:yellowgreen">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    <button onclick="fetchdata()">BUTTON BLET </button>
 </body>
+
+<script>
+
+    function fetchdata(){
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "https://localhost:8080/daldan",true);
+        xhr.onload = function() {
+      if (xhr.status === 200) {
+        document.getElementById("data").innerHTML = xhr.responseText;
+      }
+    };
+    xhr.send();
+    }
+
+</script>
 </html>

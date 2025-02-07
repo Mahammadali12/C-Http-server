@@ -107,11 +107,20 @@ int main (void)
 
         printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
 
-        char* recieved_msg = malloc(BUFF_SIZE);
+        char* recieved_msg = malloc(1024);
         int received_byte;
+        int total_received_byte = 0;
 
         // if((
-            received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0);
+            // while((
+                received_byte = recv(client_fd,recieved_msg,1024,0);
+                // ) != 0)
+            // {
+                printf("\e[1m%d\e[0m bytes were received\n",received_byte);
+                printf("%s\n",recieved_msg);
+                // free(recieved_msg);
+                // recieved_msg = malloc(512);
+            // }
         //     ) == 0)
         // {       
         //     perror("ZERO BYTES WERE RECEIVED");
@@ -271,8 +280,6 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
 
             sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
 
-
-
             //!   
 
             int sent_byte = 0;
@@ -309,20 +316,11 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
                 free(response);
                 response_body = malloc(256);
                 response = malloc(512);
-
             }
-            
-
-
-
-            // sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
-
 
             free(response_body);
             free(file_path);
             close(file_dp);
-
-            // return response;
             return;
         }
         // printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
@@ -331,12 +329,54 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
 
     // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
     
-    char* response_body = malloc(1000);
+    char* response_body = malloc(256);
     int file_dp;
     file_dp = open("/home/maqa/C-Http-server/resources/404.html", O_RDONLY);
-    printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
+
+    int bytes_read = read(file_dp,response_body,256);
+    printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
+
+    // sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
+
+
     sprintf(response,"%s 404 NOT FOUND\r\n%s\n\n%s",request.HTTP_version,date,response_body);
-    
+
+    int sent_byte = 0;
+    if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+    {
+        perror("ZERO BYTES WERE SENT");
+    }
+
+    printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
+    printf("\e[33m%s\e[0m\n",response);
+    printf("--------\n");
+            // sleep(2);
+    free(response_body);
+    free(response);
+    response_body = malloc(256);
+    response = malloc(512);
+
+        while ( (bytes_read = read(file_dp,response_body,256)) != 0)
+        {
+            printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
+            sprintf(response,"%s",response_body);
+            printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
+
+            printf("\e[33m%s\e[0m\n",response);
+
+
+            if((sent_byte = send(client_fd,response,bytes_read,0)) == 0)
+            {
+                perror("ZERO BYTES WERE SENT");
+                return;
+            }
+
+            // sleep(1);
+            free(response_body);
+            free(response);
+            response_body = malloc(256);
+            response = malloc(512);
+        }
 
     free(response_body);
     close(file_dp);

@@ -277,8 +277,10 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
 
             int bytes_read = read(file_dp,response_body,256);
             printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
+            char* content_type = malloc(50);
+            strcpy(content_type,"Content-Type: text/plain");
 
-            sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
+            sprintf(response,"%s 200 OK\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
 
             //!   
 
@@ -331,15 +333,16 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
     
     char* response_body = malloc(256);
     int file_dp;
-    file_dp = open("/home/maqa/C-Http-server/resources/404.html", O_RDONLY);
+    file_dp = open("/home/maqa/C-Http-server/resources/response.json", O_RDONLY);
 
     int bytes_read = read(file_dp,response_body,256);
     printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
 
     // sprintf(response,"%s 200 OK\r\n%s\n\n%s",request.HTTP_version,date,response_body);
+    char* content_type = malloc(50);
+    strcpy(content_type,"Content-Type: application/json");
 
-
-    sprintf(response,"%s 404 NOT FOUND\r\n%s\n\n%s",request.HTTP_version,date,response_body);
+    sprintf(response,"%s 404 NOT FOUND\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
 
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
@@ -360,9 +363,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
         {
             printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
             sprintf(response,"%s",response_body);
-            printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
 
-            printf("\e[33m%s\e[0m\n",response);
 
 
             if((sent_byte = send(client_fd,response,bytes_read,0)) == 0)
@@ -370,6 +371,8 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
                 perror("ZERO BYTES WERE SENT");
                 return;
             }
+            printf("\e[33m%s\e[0m\n",response);
+            printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
 
             // sleep(1);
             free(response_body);

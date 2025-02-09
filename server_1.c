@@ -154,8 +154,8 @@ int main (void)
 
         printf("--------------\n");
         struct http_request rq = parseRequest_TEST(recieved_msg);
-        printf("Connection: %s\n",rq.Connection);
-        printf("Host: %s\n",rq.Host);
+        printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
+        printf("Host: %s %d\n",rq.Host,strlen(rq.Host));
         if(strcmp(rq.Connection,"close") == 0)
         break;
         // close(file_dp);
@@ -278,7 +278,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
             int bytes_read = read(file_dp,response_body,256);
             printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
             char* content_type = malloc(50);
-            strcpy(content_type,"Content-Type: text/plain");
+            strcpy(content_type,"Content-Type: text/html");
 
             sprintf(response,"%s 200 OK\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
 
@@ -302,9 +302,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
             {
                 printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
                 sprintf(response,"%s",response_body);
-                printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
 
-                printf("\e[33m%s\e[0m\n",response);
 
 
                 if((sent_byte = send(client_fd,response,bytes_read,0)) == 0)
@@ -312,6 +310,8 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
                     perror("ZERO BYTES WERE SENT");
                     return;
                 }
+                printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
+                printf("\e[33m%s\e[0m\n",response);
 
                 // sleep(1);
                 free(response_body);
@@ -453,6 +453,9 @@ struct http_request parseRequest_TEST(char* request)
 {
 
     struct http_request ht_request;
+    
+    // ht_request.Connection = malloc(4);
+    // strcpy(ht_request.Connection,"NULL");
     // ht_request.Host = malloc(50);
 
     char* request_temp = request;
@@ -467,6 +470,7 @@ struct http_request parseRequest_TEST(char* request)
             request_temp++;
             if(strncmp("Connection",request_temp,10) == 0 )
             {
+                // free(ht_request.Connection);
                 // printf("%c--%c--%c\n",*(request_temp+2),*(request_temp+3),*(request_temp+4));
                 for (int i = 0; i < 12; i++)
                 request_temp++;
@@ -477,8 +481,10 @@ struct http_request parseRequest_TEST(char* request)
                     length++;
                 }
                 
-                ht_request.Connection = malloc(length);
+                ht_request.Connection = malloc(length+2);
+                printf("%d\n",length);
                 strncpy(ht_request.Connection,request_temp-length,length+1); //* be careful for +1 
+                *(ht_request.Connection+length+2) = '\0';
                 // printf("%s\n",ht_request.Connection);
                 // printf("Connection %d\n",length);
                 length = 0;

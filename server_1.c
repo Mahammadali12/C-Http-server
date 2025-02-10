@@ -15,11 +15,8 @@
 #define PORT 8080
 #define BUFF_SIZE 1000
 
-struct http_request_requestLine parseRequest(char* request);
-void  generateResponseAndSendResponse(struct http_request_requestLine request,char** files,int file_count,char* date,int client_fd);
-char** getResources(int* file_count);
-void getCurrentTime(char* d);
-struct http_request parseRequest_TEST(char* request);
+
+
 
 struct http_request_requestLine
 {
@@ -34,6 +31,13 @@ struct http_request
     char* Host;
     char* Connection;
 };
+
+struct http_request_requestLine parseRequest(char* request);
+void  generateResponseAndSendResponse(struct http_request_requestLine request,char** files,int file_count,char* date,int client_fd);
+char** getResources(int* file_count);
+void getCurrentTime(char* d);
+void parseRequest_TEST(char* request,struct http_request * ht);
+
 
 
 
@@ -153,9 +157,27 @@ int main (void)
         printf("--------------\n");
 
         printf("--------------\n");
-        struct http_request rq = parseRequest_TEST(recieved_msg);
+        struct http_request rq;
+        parseRequest_TEST(recieved_msg,&rq);
         printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
-        printf("Host: %s %d\n",rq.Host,strlen(rq.Host));
+        for (int i = 0; i < strlen(rq.Connection); i++)
+        {
+            printf("%d ",*(rq.Connection+i));
+        }
+        printf("\n");
+
+        // printf("Host: %s \n",rq.Host);
+        
+
+        for(int i = 0; i < 5; i++)
+        {
+            printf("DASAS");
+            printf("%c ",*(rq.Host));
+            
+        }
+                
+
+
         if(strcmp(rq.Connection,"close") == 0)
         break;
         // close(file_dp);
@@ -449,10 +471,10 @@ void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do n
     strcpy(d,date_str);
 }
 
-struct http_request parseRequest_TEST(char* request)
+void parseRequest_TEST(char* request,struct http_request * ht)
 {
 
-    struct http_request ht_request;
+    // struct http_request ht_request;
     
     // ht_request.Connection = malloc(4);
     // strcpy(ht_request.Connection,"NULL");
@@ -480,11 +502,10 @@ struct http_request parseRequest_TEST(char* request)
                     request_temp++; 
                     length++;
                 }
-                
-                ht_request.Connection = malloc(length+2);
+                ht->Connection = malloc(length+2);
                 printf("%d\n",length);
-                strncpy(ht_request.Connection,request_temp-length,length+1); //* be careful for +1 
-                *(ht_request.Connection+length+2) = '\0';
+                strncpy(ht->Connection,request_temp-length,length+1); //* be careful for +1 
+                *(ht->Connection+length+1) = '\0';
                 // printf("%s\n",ht_request.Connection);
                 // printf("Connection %d\n",length);
                 length = 0;
@@ -502,9 +523,9 @@ struct http_request parseRequest_TEST(char* request)
 
                 }
 
-                ht_request.Host = malloc(length);
-                strncpy(ht_request.Host,request_temp-length,length+1); //* be careful for +1 
-                
+                ht->Host = malloc(length+2);
+                strncpy(ht->Host,request_temp-length,length+1); //* be careful for +1 
+                *(ht->Host+length+2) = '\0';
                 // printf("%s\n",ht_request.Host);
                 // printf("Host %d\n",length);
                 length = 0;
@@ -521,7 +542,7 @@ struct http_request parseRequest_TEST(char* request)
     }
     // printf("%s\n",test);
     // printf("%i\n",cnt);
-    return ht_request;
+    // return &ht_request;
     
 }
 

@@ -116,33 +116,84 @@ int main (void)
         int total_received_byte = 0;
 
         // if((
-            // while((
-                received_byte = recv(client_fd,recieved_msg,1024,0);
-                // ) != 0)
-            // {
-                printf("\e[1m%d\e[0m bytes were received\n",received_byte);
-                printf("%s\n",recieved_msg);
+            while(( 
+                received_byte = recv(client_fd,recieved_msg,1024,0)
+                ) != -1)   
+            {
+                printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
+                printf("\e[33m%s\e[0m\n",recieved_msg);
+
+                struct http_request_requestLine request = parseRequest(recieved_msg);
+
+                generateResponseAndSendResponse(request,files,file_count,date,client_fd);
+                // int sent_byte = 0;
+                // if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
+                // {
+                //     perror("ZERO BYTES WERE SENT");
+                //     return(1);
+                // }
+
+
+                printf("--------------\n");
+
+                printf("--------------\n");
+                struct http_request rq;
+
+                parseRequest_TEST(recieved_msg,&rq);
+                printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
+                printf("Host: %s %d\n",rq.Host,strlen(rq.Host));
+                // for (int i = 0; i < strlen(rq.Connection); i++)
+                // {
+                //     printf("%d ",*(rq.Connection+i));
+                // }
+                // printf("\n");
+
+                // for(int i = 0; i < strlen(rq.Host); i++)
+                // {
+                //     // printf("DASAS");
+                //     printf("%c ",*(rq.Host+i));
+
+                // }
+
+                if(strcmp(rq.Connection,"close") == 0)
+                break;
+                // close(file_dp);
+                close(client_fd);
+
+                free(recieved_msg);
+
+                // free(response);
+
+                free(rq.Connection);
+                free(rq.Host);
+
+                free(request.request_URI);
+                free(request.method);
+                free(request.HTTP_version);
+
+
+
                 // free(recieved_msg);
                 // recieved_msg = malloc(512);
-            // }
-        //     ) == 0)
+            }
+            // ) == 0)
+        // if( received_byte == 0)
         // {       
         //     perror("ZERO BYTES WERE RECEIVED");
         //     return(1);
         // }
 
-        printf("%d bytes were received from client:%d\n",received_byte,client_fd);
+        // printf("%d bytes were received from client:%d\n",received_byte,client_fd);
         // printf("MESSAGE:\n");
         // printf("%s\n",recieved_msg);
 
-        char* response;
+        // char* response;
         // int file_dp;
         // file_dp = open("/home/maqa/C-Http-server/resources/index.html", O_RDONLY);
         // printf("%d bytes were read\n",read(file_dp,response,BUFF_SIZE));
 
-        struct http_request_requestLine request = parseRequest(recieved_msg);
 
-        generateResponseAndSendResponse(request,files,file_count,date,client_fd);
+        // struct generateResponseAndSendResponse(request,files,file_count,date,client_fd);
         // int sent_byte = 0;
         // if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
         // {
@@ -154,45 +205,45 @@ int main (void)
         // printf("Response:\n");
         // printf("%s",response);
 
-        printf("--------------\n");
+        // printf("--------------\n");
 
-        printf("--------------\n");
-        struct http_request rq;
-        parseRequest_TEST(recieved_msg,&rq);
-        printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
-        for (int i = 0; i < strlen(rq.Connection); i++)
-        {
-            printf("%d ",*(rq.Connection+i));
-        }
-        printf("\n");
+        // printf("--------------\n");
+        // struct http_request rq;
+        // parseRequest_TEST(recieved_msg,&rq);
+        // printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
+        // for (int i = 0; i < strlen(rq.Connection); i++)
+        // {
+        //     printf("%d ",*(rq.Connection+i));
+        // }
+        // printf("\n");
 
         // printf("Host: %s \n",rq.Host);
         
 
-        for(int i = 0; i < 5; i++)
-        {
-            printf("DASAS");
-            printf("%c ",*(rq.Host));
+        // for(int i = 0; i < 5; i++)
+        // {
+        //     printf("DASAS");
+        //     printf("%c ",*(rq.Host));
             
-        }
+        // }
                 
 
 
-        if(strcmp(rq.Connection,"close") == 0)
-        break;
-        // close(file_dp);
-        close(client_fd);
+        // if(strcmp(rq.Connection,"close") == 0)
+        // break;
+        // // close(file_dp);
+        // close(client_fd);
 
-        free(recieved_msg);
+        // free(recieved_msg);
 
-        free(response);
+        // free(response);
 
-        free(rq.Connection);
-        free(rq.Host);
+        // free(rq.Connection);
+        // free(rq.Host);
 
-        free(request.request_URI);
-        free(request.method);
-        free(request.HTTP_version);
+        // free(request.request_URI);
+        // free(request.method);
+        // free(request.HTTP_version);
     }
 
 

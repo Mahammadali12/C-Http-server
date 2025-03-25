@@ -14,9 +14,7 @@
 
 #define PORT 8080
 #define BUFF_SIZE 8192
-
-
-
+#define L_BUFF_SIZE 10240
 
 struct http_request_requestLine
 {
@@ -374,7 +372,7 @@ struct http_request_requestLine parseRequest(char* request)
 void generateResponseAndSendResponse(struct http_request_requestLine request,char** files,int file_count,char* date,int client_fd,struct http_request full_request)
 {     // ! TODO: REMEBER YOU CHANGED RETURN VALUE TO THE VOID
     
-    char* response = malloc(BUFF_SIZE);
+    char* response = malloc(L_BUFF_SIZE);
     // char** temp_files = files;
 
     for (int i = 0; i < file_count; i++)
@@ -413,14 +411,14 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
             free(response_body);
             free(response);
             response_body = malloc(BUFF_SIZE);
-            response = malloc(BUFF_SIZE);
+            response = malloc(L_BUFF_SIZE);
             while ( (bytes_read = read(file_dp,response_body,BUFF_SIZE)) != 0)
             {
                 printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
                 sprintf(response,"%s",response_body);
 
 
-                if((sent_byte = send(client_fd,response,bytes_read,0)) == 0)
+                if((sent_byte = send(client_fd,response,bytes_read,0)) == -1)
                 {
                     perror("ZERO BYTES WERE SENT");
                     return;
@@ -431,8 +429,8 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
                 sleep(1);
                 free(response_body);
                 free(response);
-                response_body = malloc(BUFF_SIZE);
-                response = malloc(BUFF_SIZE);
+                response_body = (char*) malloc(BUFF_SIZE);
+                response = (char*) malloc(L_BUFF_SIZE);
             }
 
             free(response_body);
@@ -446,7 +444,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
 
     // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
     
-    char* response_body = malloc(BUFF_SIZE);
+    char* response_body = malloc(L_BUFF_SIZE);
     int file_dp;
     file_dp = open("/home/maqa/C-Http-server/resources/404.html", O_RDONLY);
 
@@ -473,7 +471,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
     free(response_body);
     free(response);
     response_body = malloc(BUFF_SIZE);
-    response = malloc(BUFF_SIZE);
+    response = malloc(L_BUFF_SIZE);
 
         while ( (bytes_read = read(file_dp,response_body,BUFF_SIZE)) != 0)
         {
@@ -494,7 +492,7 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
             free(response_body);
             free(response);
             response_body = malloc(BUFF_SIZE);
-            response = malloc(BUFF_SIZE);
+            response = malloc(L_BUFF_SIZE);
         }
 
     free(response);

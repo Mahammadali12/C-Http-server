@@ -23,7 +23,7 @@ struct http_request_requestLine
     char* HTTP_version;
 };
 
-
+int s=0;
 struct http_request
 {
     char* Host;
@@ -109,7 +109,7 @@ int main (void)
         }
 
         printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
-
+        s++;
         char* recieved_msg = malloc(2048);
         int received_byte;
         // int total_received_byte = 0;
@@ -167,10 +167,12 @@ int main (void)
 
                 printf("--------------\n");
 
+                if(!rq.Connection)
                 printf("Connection: %s %d\n",rq.Connection,strlen(rq.Connection));
                 printf("Host: %s %d\n",rq.Host,strlen(rq.Host));
                 printf("Accept: %s %d\n",rq.Accept,strlen(rq.Accept));
                 // printf("DASAS");
+                printf("%d\n",s);
 
                 // for(int i = 0; i < 31; i++)
                 // {
@@ -189,6 +191,7 @@ int main (void)
                 // for(int i = 0; i < strlen(rq.Host); i++)
                 
 
+                if(!rq.Connection)
                 if(strcmp(rq.Connection,"close") == 0)
                 break;
                 // close(file_dp);
@@ -197,6 +200,7 @@ int main (void)
 
                 // free(response);
 
+                if(!rq.Connection)
                 free(rq.Connection);
                 free(rq.Host);
                 free(rq.Accept);
@@ -426,11 +430,11 @@ void generateResponseAndSendResponse(struct http_request_requestLine request,cha
                 printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
                 printf("\e[33m%s\e[0m\n",response);
 
-                sleep(1);
+                // sleep(1);
                 free(response_body);
                 free(response);
-                response_body = (char*) malloc(BUFF_SIZE);
-                response = (char*) malloc(L_BUFF_SIZE);
+                response_body = malloc(BUFF_SIZE);
+                response = malloc(L_BUFF_SIZE);
             }
 
             free(response_body);

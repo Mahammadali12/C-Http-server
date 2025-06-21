@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <fcntl.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define PORT 8080
 #define BUFF_SIZE 8192
@@ -28,21 +29,24 @@ struct http_request
 {
     char* Host;
     char* Connection;
-    char* Accept;
+    char* Accept;  
 };
 
 struct http_request_requestLine parseRequestFirstLine(char* request);
-void  generateResponseAndSendResponse(struct http_request full_request,struct http_request_requestLine request,char** files,int file_count,char* date,int client_fd);
+void  generateResponseAndSendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd);
 char** getResources(int* file_count);
 void getCurrentTime(char* d);
 void parseRequest_TEST(char* request,struct http_request * ht);
+void handleClient(int client_fd, int server_fd);
+void sendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd, int fileFound);
 
-
-
+char** files;
+int file_count;
+char* date;
 
 int main (void)
 {
-    char* date = malloc(128);
+    date = malloc(128);
     getCurrentTime(date);
 
     int socket_fd;
@@ -70,9 +74,6 @@ int main (void)
         return(1);
     }
 
-    printf("[\e[1;31mSERVER_SOCKET\e[0m]: %d\n",socket_fd);
-
-
     int opt = 1;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { //* with this function OS does not wait for a few minutes */
         perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fix BIND() problem
@@ -92,8 +93,8 @@ int main (void)
         return(1);
     }
 
-    int file_count = 0;
-    char** files = getResources(&file_count); //!    TODO:   free() array of file names 
+    files = getResources(&file_count); //!    TODO:   free() array of file names 
+    
     printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
     int client_fd;
@@ -108,59 +109,74 @@ int main (void)
             return(1);
         }
 
-        printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
-        s++;
-        char* recieved_msg = malloc(2048);
-        int received_byte;
+        pid_t pid = fork();
+        if (pid == 0)
+        {
+            printf("[child %d] handling client %d\n", getpid(), client_fd);
+            close(socket_fd);
+            handleClient(client_fd,socket_fd);
+            exit(0);
+        }else
+        {
+            printf("[parent %d] spawned child %d for client %d\n", getpid(), pid, client_fd);
+            close(client_fd);
+        }
+        
+    }
 
-            while(( 
-                received_byte = recv(client_fd,recieved_msg,2048,0)
-                ) != -1)   
-            {
-                if(received_byte == 0)
-                return 1;
-                printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
-                printf("\e[33m%s\e[0m\n",recieved_msg);
-                printf("%d\n",strlen(recieved_msg));
+        // printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
+        // s++;
+        // char* recieved_msg = malloc(2048);
+        // int received_byte;
+
+        //     while(( 
+        //         received_byte = recv(client_fd,recieved_msg,2048,0)
+        //         ) != -1)   
+        //     {
+        //         if(received_byte == 0)
+        //         return 1;
+        //         printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
+        //         printf("\e[33m%s\e[0m\n",recieved_msg);
+        //         printf("%d\n",strlen(recieved_msg));
                 
 
-                struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
-                struct http_request request;
-                parseRequest_TEST(recieved_msg,&request);
-                generateResponseAndSendResponse(request,request_first_line,files,file_count,date,client_fd);
+        //         struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
+        //         struct http_request request;
+        //         parseRequest_TEST(recieved_msg,&request);
+        //         generateResponseAndSendResponse(request,request_first_line,files,file_count,date,client_fd);
 
 
-                printf("--------------\n");
-                printf("--------------\n");
+        //         printf("--------------\n");
+        //         printf("--------------\n");
 
-                if(!request.Connection)
-                printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
-                printf("Host: %s %d\n",request.Host,strlen(request.Host));
-                printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
-                printf("%d\n",s);
+        //         if(!request.Connection)
+        //         printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
+        //         printf("Host: %s %d\n",request.Host,strlen(request.Host));
+        //         printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
+        //         printf("%d\n",s);
 
 
-                if(!request.Connection)
-                if(strcmp(request.Connection,"close") == 0)
-                break;
-                // close(file_dp);
-                close(client_fd);
-                free(recieved_msg);
+        //         if(!request.Connection)
+        //         if(strcmp(request.Connection,"close") == 0)
+        //         break;
+        //         // close(file_dp);
+        //         close(client_fd);
+        //         free(recieved_msg);
 
-                // free(response);
+        //         // free(response);
 
-                if(!request.Connection)
-                free(request.Connection);
-                free(request.Host);
-                free(request.Accept);
+        //         if(!request.Connection)
+        //         free(request.Connection);
+        //         free(request.Host);
+        //         free(request.Accept);
 
-                free(request_first_line.request_URI);
-                free(request_first_line.method);
-                free(request_first_line.HTTP_version);
+        //         free(request_first_line.request_URI);
+        //         free(request_first_line.method);
+        //         free(request_first_line.HTTP_version);
 
-            }
+        //     }
             // ) == 0)
-    }
+    
 
     free(date);
     shutdown(socket_fd,SHUT_RDWR);
@@ -171,9 +187,8 @@ int main (void)
     }
     free(files);
     // close(client_fd);    
-    close(socket_fd);
+    // close(socket_fd);
 }
-
 
 struct http_request_requestLine parseRequestFirstLine(char* request)
 {
@@ -249,93 +264,32 @@ struct http_request_requestLine parseRequestFirstLine(char* request)
     
 }
 
-void generateResponseAndSendResponse(struct http_request full_request,struct http_request_requestLine request,char** files,int file_count,char* date,int client_fd)
-{     // ! TODO: REMEBER YOU CHANGED RETURN VALUE TO THE VOID
-    
+void sendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd, int fileFound)
+{
+
     char* response = malloc(L_BUFF_SIZE);
+    char* response_body = malloc(BUFF_SIZE);
 
-    for (int i = 0; i < file_count; i++)
-    {
-        if(strcmp(request.request_URI+1,*(files+i)) == 0) // * +1 for request.request_URI is to remove "/"
-        {
-            // printf("[\e[1;32m200 OK\e[0m] %s\n",*(temp_files+i));
-            char* response_body = malloc(BUFF_SIZE);
-            int file_dp;
-            char* file_path = malloc(70);
-
-            sprintf(file_path,"/home/maqa/C-Http-server/resources/%s",request.request_URI+1);
-
-            file_dp = open(file_path, O_RDONLY);
-
-            // printf("%d bytes were read\n",read(file_dp,response_body,BUFF_SIZE));
-
-            int bytes_read = read(file_dp,response_body,BUFF_SIZE);
-            printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
-            char* content_type = malloc(50);
-            sprintf(content_type,"Content-Type: %s",full_request.Accept);
-            // strcpy(content_type,"Content-Type: %s");
-
-            sprintf(response,"%s 200 OK\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
-
-
-            int sent_byte = 0;
-            if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
-            {
-                perror("ZERO BYTES WERE SENT");
-            }
-
-            printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
-            // printf("\e[33m%s\e[0m\n",response);
-            printf("\e[33m RESPONSE \e[0m\n",response);
-            printf("--------\n");
-            free(response_body);
-            free(response);
-            response_body = malloc(BUFF_SIZE);
-            response = malloc(L_BUFF_SIZE);
-            while ( (bytes_read = read(file_dp,response_body,BUFF_SIZE)) != 0)
-            {
-                printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
-                sprintf(response,"%s",response_body);
-
-
-                if((sent_byte = send(client_fd,response,bytes_read,0)) == -1)
-                {
-                    perror("ZERO BYTES WERE SENT");
-                    return;
-                }
-                printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
-                printf("\e[33m RESPONSE \e[0m\n",response);
-                // printf("\e[33m%s\e[0m\n",response);
-
-                // sleep(1);
-                free(response_body);
-                free(response);
-                response_body = malloc(BUFF_SIZE);
-                response = malloc(L_BUFF_SIZE);
-            }
-
-            free(response_body);
-            free(file_path);
-            close(file_dp);
-            return;
-        }
-        // printf("\e[32m comparing  %s --  %s\e[0m\n",request.request_URI+1,*(temp_files+i));
-        // printf("%i\n",strcmp(request.request_URI+1,*(temp_files+i))); // * +1 for request.request_URI is to remove "/"
-    }
-
-    // printf("[\e[1;31m404 NOT FOUND\e[0m] %s\n",request.request_URI+1);
-    
-    char* response_body = malloc(L_BUFF_SIZE);
+    char* file_path = malloc(70);
     int file_dp;
-    file_dp = open("/home/maqa/C-Http-server/resources/404.html", O_RDONLY);
+
+    
+    if(fileFound)
+    sprintf(file_path,"/home/maqa/C-Http-server/resources/%s",request.request_URI);
+    else
+    sprintf(file_path,"/home/maqa/C-Http-server/resources/404.html");
+
+    file_dp = open(file_path,O_RDONLY);
 
     int bytes_read = read(file_dp,response_body,BUFF_SIZE);
     printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
 
-    char* content_type = malloc(70);
-    sprintf(content_type,"Content-Type: %s", full_request.Accept);
-    // strcpy(content_type,"Content-Type: text/html");
+    char* content_type = malloc(50);
+    sprintf(content_type,"Content-Type: %s",full_request.Accept);
 
+    if(fileFound)
+    sprintf(response,"%s 200 OK\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
+    else
     sprintf(response,"%s 404 NOT FOUND\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
 
     int sent_byte = 0;
@@ -345,46 +299,51 @@ void generateResponseAndSendResponse(struct http_request full_request,struct htt
     }
 
     printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
-    printf("\e[33m%s\e[0m\n",response);
+    printf("\e[33m RESPONSE \e[0m\n",response);
     printf("--------\n");
-            // sleep(2);
     free(response_body);
     free(response);
     response_body = malloc(BUFF_SIZE);
     response = malloc(L_BUFF_SIZE);
 
-        while ( (bytes_read = read(file_dp,response_body,BUFF_SIZE)) != 0)
-        {
+    while ( (bytes_read = read(file_dp,response_body,BUFF_SIZE)) != 0)
+    {
             printf("\e[1m%d\e[0m bytes were read to \e[31mresponse body\e[0m\n",bytes_read);
             sprintf(response,"%s",response_body);
-
-
-
-            if((sent_byte = send(client_fd,response,bytes_read,0)) == 0)
+            if((sent_byte = send(client_fd,response,bytes_read,0)) == -1)
             {
                 perror("ZERO BYTES WERE SENT");
                 return;
             }
-            printf("\e[33m%s\e[0m\n",response);
             printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
-
+            printf("\e[33m RESPONSE \e[0m\n",response);
+            // printf("\e[33m%s\e[0m\n",response);
             // sleep(1);
             free(response_body);
             free(response);
             response_body = malloc(BUFF_SIZE);
             response = malloc(L_BUFF_SIZE);
-        }
+    }
 
-    free(response);
     free(response_body);
+    free(file_path);
     close(file_dp);
+    return;
+}
 
-    // return response;
+void generateResponseAndSendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd)
+{     // ! TODO: REMEBER YOU CHANGED RETURN VALUE TO THE VOID    
+    for (int i = 0; i < file_count; i++)
+    {   
     
-    // for (int i = 1; i < file_count; i++)
-    // {
-    //     free(*(files+i));  //! TODO: FREE MEMORY OF THE FILE NAMES !!!
-    // }
+        if(strcmp(request.request_URI+1,*(files+i)) == 0) // * +1 for request.request_URI is to remove '/'
+        {
+            sendResponse(full_request,request,date,client_fd,1);
+            return;
+        }
+    }
+
+    sendResponse(full_request,request,date,client_fd,0);
 }
 
 char** getResources(int* file_count)
@@ -519,3 +478,53 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
     }
 }
 
+void handleClient(int client_fd, int server_fd)
+{
+    printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,server_fd);
+    char* recieved_msg = malloc(2048);
+    int received_byte;
+
+    while(( received_byte = recv(client_fd,recieved_msg,2048,0)) != -1)   
+            {
+                if(received_byte == 0)
+                return ;
+                printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
+                printf("\e[33m%s\e[0m\n",recieved_msg);
+                printf("%d\n",strlen(recieved_msg));
+                
+
+                struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
+                struct http_request request;
+                parseRequest_TEST(recieved_msg,&request);
+                generateResponseAndSendResponse(request,request_first_line,date,client_fd);
+
+                printf("--------------\n");
+
+                if(!request.Connection)
+                printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
+                printf("Host: %s %d\n",request.Host,strlen(request.Host));
+                printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
+                printf("%d\n",s);
+
+
+                if(!request.Connection)
+                if(strcmp(request.Connection,"close") == 0)
+                break;
+                // close(file_dp);
+                // close(client_fd);
+                free(recieved_msg);
+
+                // free(response);
+
+                if(!request.Connection)
+                free(request.Connection);
+                free(request.Host);
+                free(request.Accept);
+
+                free(request_first_line.request_URI);
+                free(request_first_line.method);
+                free(request_first_line.HTTP_version);
+
+            }
+
+}

@@ -46,7 +46,7 @@ char* date;
 
 int main (void)
 {
-    date = malloc(128);
+    date = malloc(BUFF_SIZE);
     getCurrentTime(date);
 
     int socket_fd;
@@ -101,12 +101,13 @@ int main (void)
     while (1)
     {
 
-        struct sockaddr_storage dd;
-        socklen_t addrlen;
-        if ((client_fd = accept(socket_fd,(struct sockaddr*)&addr,&addrlen)) == -1)
+        struct sockaddr_storage client_address;
+        socklen_t addrlen = sizeof(client_address);
+        client_fd = accept(socket_fd,(struct sockaddr*)&addr,&addrlen);
+        if (client_fd == -1)
         {
             perror("ACCEPT()");
-            return(1);
+            continue;
         }
 
         pid_t pid = fork();
@@ -121,11 +122,10 @@ int main (void)
             printf("[parent %d] spawned child %d for client %d\n", getpid(), pid, client_fd);
             close(client_fd);
         }
-        
+        s++;   
     }
 
         // printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
-        // s++;
         // char* recieved_msg = malloc(2048);
         // int received_byte;
 
@@ -180,6 +180,8 @@ int main (void)
 
     free(date);
     shutdown(socket_fd,SHUT_RDWR);
+    close(client_fd);
+    close(socket_fd);
 
     for (size_t i = 0; i < file_count; i++)
     {
@@ -209,6 +211,7 @@ struct http_request_requestLine parseRequestFirstLine(char* request)
     int flag = 0;
     int finish = 0;
     char* temp_request = request;
+    // printf("asdsasa\n");
     while (*(request+2)!='\0')
     {        
         if(*request == '\r' && flag == 2)
@@ -274,7 +277,7 @@ void sendResponse(struct http_request full_request,struct http_request_requestLi
     int file_dp;
 
     
-    if(fileFound)
+    if(fileFound == 1)
     sprintf(file_path,"/home/maqa/C-Http-server/resources/%s",request.request_URI);
     else
     sprintf(file_path,"/home/maqa/C-Http-server/resources/404.html");
@@ -287,7 +290,7 @@ void sendResponse(struct http_request full_request,struct http_request_requestLi
     char* content_type = malloc(50);
     sprintf(content_type,"Content-Type: %s",full_request.Accept);
 
-    if(fileFound)
+    if(fileFound == 1)
     sprintf(response,"%s 200 OK\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
     else
     sprintf(response,"%s 404 NOT FOUND\r\n%s\n%s\n\n%s",request.HTTP_version,content_type,date,response_body);
@@ -339,10 +342,11 @@ void generateResponseAndSendResponse(struct http_request full_request,struct htt
         if(strcmp(request.request_URI+1,*(files+i)) == 0) // * +1 for request.request_URI is to remove '/'
         {
             sendResponse(full_request,request,date,client_fd,1);
+            printf("\e[32mRequested File was found\e[0m\n");
             return;
         }
     }
-
+    printf("\e[31mRequested File not found\e[0m\n");
     sendResponse(full_request,request,date,client_fd,0);
 }
 
@@ -429,13 +433,13 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
                 http->Connection = malloc(length+2);
                 strncpy(http->Connection,request_temp-length,length+1); //* be careful for +1 
                 *(http->Connection+length+1) = '\0';
-                length = 0;
+                length = 0;                
                 printf("\e[1m Connection was parsed\e[0m\n");
             }
             if (strncmp("Host",request_temp,4) == 0)
             {
-                for (int i = 0; i < 6; i++)
-                request_temp++;
+                // for (int i = 0; i < 6; i++)
+                request_temp+=6;
 
                 while(*(request_temp+1) != '\r')
                 {
@@ -448,15 +452,18 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
                 strncpy(http->Host,request_temp-length,length+1); //* be careful for +1 
                 *(http->Host+length+2) = '\0';
                 length = 0;
-                printf("\e[1m Host was parsed\e[0m\n");
+                printf("\e[1m Host was parsed - %s\e[0m\n", http->Host);
             }
             if(strncmp("Accept:", request_temp, 7) == 0 )
             {
-                for (int i = 0; i < 8; i++)
-                request_temp++;
-
+                // for (int i = 0; i < 8; i++)
+                request_temp+=8;
+                char* accept_body = malloc(BUFF_SIZE);
+                printf("accept girdi\n");
                 while (*(request_temp+1) != ',' && *(request_temp+1) != ';' && *(request_temp+1) != ',')
                 {
+
+
                     request_temp++;
                     length++;
                 }
@@ -472,6 +479,7 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
             // {
                 // printf("DALDAN\n");
             // }
+            printf("daldan\n");
             
         }
         request_temp++;
@@ -481,50 +489,50 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
 void handleClient(int client_fd, int server_fd)
 {
     printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,server_fd);
-    char* recieved_msg = malloc(2048);
+    char* recieved_msg = malloc(BUFF_SIZE);
     int received_byte;
 
-    while(( received_byte = recv(client_fd,recieved_msg,2048,0)) != -1)   
-            {
-                if(received_byte == 0)
-                return ;
-                printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
-                printf("\e[33m%s\e[0m\n",recieved_msg);
-                printf("%d\n",strlen(recieved_msg));
+    while(( received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0)) != -1)   
+    {
+        if(received_byte == 0)
+        return ;
+        printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
+        printf("\e[33m%s\e[0m\n",recieved_msg);
+        // printf("%d\n",strlen(recieved_msg));
                 
 
-                struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
-                struct http_request request;
-                parseRequest_TEST(recieved_msg,&request);
-                generateResponseAndSendResponse(request,request_first_line,date,client_fd);
+        struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
+        struct http_request request;
+        parseRequest_TEST(recieved_msg,&request);
+        generateResponseAndSendResponse(request,request_first_line,date,client_fd);
 
-                printf("--------------\n");
+        printf("--------------\n");
 
-                if(!request.Connection)
-                printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
-                printf("Host: %s %d\n",request.Host,strlen(request.Host));
-                printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
-                printf("%d\n",s);
+        if(!request.Connection)
+        printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
+        printf("Host: %s %d\n",request.Host,strlen(request.Host));
+        printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
+        printf("%d\n",s);
 
 
-                if(!request.Connection)
-                if(strcmp(request.Connection,"close") == 0)
-                break;
-                // close(file_dp);
-                // close(client_fd);
-                free(recieved_msg);
+        if(!request.Connection)
+        if(strcmp(request.Connection,"close") == 0)
+        break;
+        free(recieved_msg);
 
-                // free(response);
+        close(client_fd);
 
-                if(!request.Connection)
-                free(request.Connection);
-                free(request.Host);
-                free(request.Accept);
+        // free(response);
 
-                free(request_first_line.request_URI);
-                free(request_first_line.method);
-                free(request_first_line.HTTP_version);
+        if(!request.Connection)
+        free(request.Connection);
+        free(request.Host);
+        free(request.Accept);
 
-            }
+        free(request_first_line.request_URI);
+        free(request_first_line.method);
+        free(request_first_line.HTTP_version);
+
+    }
 
 }

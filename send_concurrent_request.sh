@@ -3,6 +3,7 @@ for i in {1..10}; do
     curl -s http://localhost:8080/index.html >/dev/null &
     pid=$!  # Get PID of last background process
     ls -l /proc/$pid/fd
+    sleep 1
 done
 
 # Wait for all background processes to finish

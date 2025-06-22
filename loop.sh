@@ -1,7 +1,7 @@
 #!/bin/bash -v
 
 # Set the number of iterations
-iterations=500
+iterations=5
 
 # Set delay between each execution (in seconds)
 delay=1

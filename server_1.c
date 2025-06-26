@@ -13,6 +13,8 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include "list.h"
+
 #define PORT 8080
 #define BUFF_SIZE 8192
 #define L_BUFF_SIZE 10240
@@ -23,6 +25,13 @@ struct http_request_requestLine
     char* request_URI;
     char* HTTP_version;
 };
+
+struct accept_t
+{
+    char* mime_type;
+    float quality;
+};
+
 
 int s=0;
 struct http_request
@@ -125,59 +134,6 @@ int main (void)
         s++;   
     }
 
-        // printf("[\e[1;32mCLIENT\e[0m] %d\n[\e[1;32mSERVER\e[0m] %d\n",client_fd,socket_fd);
-        // char* recieved_msg = malloc(2048);
-        // int received_byte;
-
-        //     while(( 
-        //         received_byte = recv(client_fd,recieved_msg,2048,0)
-        //         ) != -1)   
-        //     {
-        //         if(received_byte == 0)
-        //         return 1;
-        //         printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
-        //         printf("\e[33m%s\e[0m\n",recieved_msg);
-        //         printf("%d\n",strlen(recieved_msg));
-                
-
-        //         struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
-        //         struct http_request request;
-        //         parseRequest_TEST(recieved_msg,&request);
-        //         generateResponseAndSendResponse(request,request_first_line,files,file_count,date,client_fd);
-
-
-        //         printf("--------------\n");
-        //         printf("--------------\n");
-
-        //         if(!request.Connection)
-        //         printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
-        //         printf("Host: %s %d\n",request.Host,strlen(request.Host));
-        //         printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
-        //         printf("%d\n",s);
-
-
-        //         if(!request.Connection)
-        //         if(strcmp(request.Connection,"close") == 0)
-        //         break;
-        //         // close(file_dp);
-        //         close(client_fd);
-        //         free(recieved_msg);
-
-        //         // free(response);
-
-        //         if(!request.Connection)
-        //         free(request.Connection);
-        //         free(request.Host);
-        //         free(request.Accept);
-
-        //         free(request_first_line.request_URI);
-        //         free(request_first_line.method);
-        //         free(request_first_line.HTTP_version);
-
-        //     }
-            // ) == 0)
-    
-
     free(date);
     shutdown(socket_fd,SHUT_RDWR);
     close(client_fd);
@@ -188,8 +144,48 @@ int main (void)
         free(*(files+i));
     }
     free(files);
-    // close(client_fd);    
-    // close(socket_fd);
+}
+
+void parseAcceptHeader(char* accept)
+{
+    int length = 0;
+    int i = 0 ;
+
+    if(strncmp(accept,"*/*",3) == 0)
+    printf("Accept header is : */*\n");
+    else
+    {
+        printf("Accept header is other type\n");
+        struct accept_t accepts [10];
+        int accept_length = strstr(accept,"\n")-accept;
+        printf("%d\n",strstr(accept,"\n")-accept);
+        char* buf = malloc(100);
+        strncpy(buf,accept,accept_length);
+        int buf_length = strlen(buf);
+        char* trimmed_buf = malloc(100);
+        int trimmmed_buf_length = 0;
+        for (int i = 0; i < buf_length ; i++)
+        {
+            if (*(buf+i) !=' ')
+            {
+                *(trimmed_buf+trimmmed_buf_length) = *(buf+i);
+                trimmmed_buf_length++;
+            }
+            
+        }
+        
+        printf("\e[31m%s\e[0m\n",buf);
+        printf("\e[32m%s\e[0m\n",trimmed_buf);
+        while (*(accept+i) != '\n')
+        {
+            // printf("%d ",*(accept+i));
+            i++;
+        }
+
+    }
+    
+    printf("\n");
+    printf("\e[1mACCEPT - \e[0m %d\n",i);
 }
 
 struct http_request_requestLine parseRequestFirstLine(char* request)
@@ -459,7 +455,7 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
                 // for (int i = 0; i < 8; i++)
                 request_temp+=8;
                 char* accept_body = malloc(BUFF_SIZE);
-                printf("accept girdi\n");
+                parseAcceptHeader(request_temp);
                 while (*(request_temp+1) != ',' && *(request_temp+1) != ';' && *(request_temp+1) != ',')
                 {
 
@@ -479,7 +475,7 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
             // {
                 // printf("DALDAN\n");
             // }
-            printf("daldan\n");
+            // printf("daldan\n");
             
         }
         request_temp++;

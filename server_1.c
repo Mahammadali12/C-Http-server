@@ -32,6 +32,8 @@ struct accept_t
     float quality;
 };
 
+struct accept_t accepts[10];
+
 
 int s=0;
 struct http_request
@@ -48,6 +50,8 @@ void getCurrentTime(char* d);
 void parseRequest_TEST(char* request,struct http_request * ht);
 void handleClient(int client_fd, int server_fd);
 void sendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd, int fileFound);
+void tokenizeAcceptHeader(char* trimmed_buf, int trimmed_buf_length);
+
 
 char** files;
 int file_count;
@@ -146,6 +150,74 @@ int main (void)
     free(files);
 }
 
+
+void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
+{
+    char* token;
+    char* svptr;
+    char* qValue;
+    int it = 0;
+    while (token = strtok_r(trimmed_buf,",",&svptr))
+    {
+        
+        printf("\e[1mTOKEN - %s\e[0m\n",token);
+        // printf("\e[1mbuf - %s\e[0m\n",trimmed_buf);
+        // printf("\e[1msvp - %s\e[0m\n",svptr);
+        if ((qValue = strstr(token,"q=")) != NULL)
+        {
+            if (*(qValue+strlen(qValue)-1) == '\r')
+            {
+                // printf("pox nedi qaqa\n");
+                *(qValue+strlen(qValue)-1) = '\0';
+                accepts[it].mime_type = malloc(200);
+                strncpy(accepts[it].mime_type,token,qValue-token);
+                
+            }
+            accepts[it].mime_type = malloc(200);
+            strncpy(accepts[it].mime_type,token,qValue-token-1);
+            *(accepts[it].mime_type+(qValue-token-1)) = '\0';
+            int resad = strlen(accepts[it].mime_type);
+            // printf("%s\n",accepts[it].mime_type);
+            // for (int i = 0; i < resad; i++)
+            // {
+            //     printf("%c ",*(accepts[it].mime_type+i));
+            // }
+            // printf("\n");
+            // for (int i = 0; i < resad; i++)
+            // {
+            //     printf("%d ",*(accepts[it].mime_type+i));
+            // }
+            
+            // printf("qValue-token=%d\n",qValue-token-1);
+            printf("\e[34m Parsed- %s\n\e[0m",accepts[it].mime_type);
+            // printf("token - %c vs qValue - %c",*token,*qValue);
+            
+            qValue +=2;
+            // for (int i = 0; i < strlen(qValue); i++)
+            // {
+            //     printf("%d ",*(qValue+i));
+            // }
+            // printf("\n");
+            // printf(" length - %d \n",strlen(qValue));
+            printf("%f o yee\n", strtof(qValue,NULL));
+            accepts[it].quality = strtof(qValue,NULL);
+        }else
+        {
+            accepts[it].mime_type = malloc(200);
+            // printf("\e[34m %d \e[0m\n",strlen(token));
+            strcpy(accepts[it].mime_type,token);
+            printf("\e[34m Parsed - %s\n\e[0m",accepts[it].mime_type);
+        }
+        it++;
+        
+        trimmed_buf = NULL;
+    }
+    
+
+
+
+}
+
 void parseAcceptHeader(char* accept)
 {
     int length = 0;
@@ -156,13 +228,12 @@ void parseAcceptHeader(char* accept)
     else
     {
         printf("Accept header is other type\n");
-        struct accept_t accepts [10];
+        // struct accept_t accepts [10];
         int accept_length = strstr(accept,"\n")-accept;
-        printf("%d\n",strstr(accept,"\n")-accept);
-        char* buf = malloc(100);
+        char* buf = malloc(accept_length);
         strncpy(buf,accept,accept_length);
         int buf_length = strlen(buf);
-        char* trimmed_buf = malloc(100);
+        char* trimmed_buf = malloc(accept_length);
         int trimmmed_buf_length = 0;
         for (int i = 0; i < buf_length ; i++)
         {
@@ -173,6 +244,16 @@ void parseAcceptHeader(char* accept)
             }
             
         }
+
+        tokenizeAcceptHeader(trimmed_buf,trimmmed_buf_length);
+        // char* token;
+        // char* svptr = trimmed_buf;
+        // while (token = strtok_r(trimmed_buf,",",&svptr))
+        // {   
+        //     trimmed_buf = NULL;
+        //     printf("\e[1m%s\e[0m\n",token);
+        // }
+        
         
         printf("\e[31m%s\e[0m\n",buf);
         printf("\e[32m%s\e[0m\n",trimmed_buf);
@@ -181,7 +262,6 @@ void parseAcceptHeader(char* accept)
             // printf("%d ",*(accept+i));
             i++;
         }
-
     }
     
     printf("\n");

@@ -157,63 +157,65 @@ void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
     char* svptr;
     char* qValue;
     int it = 0;
+    int idx = 0;
+    float qValueFLoat;
     while (token = strtok_r(trimmed_buf,",",&svptr))
     {
         
         printf("\e[1mTOKEN - %s\e[0m\n",token);
         // printf("\e[1mbuf - %s\e[0m\n",trimmed_buf);
         // printf("\e[1msvp - %s\e[0m\n",svptr);
+        accepts[it].mime_type = malloc(200);
         if ((qValue = strstr(token,"q=")) != NULL)
         {
             if (*(qValue+strlen(qValue)-1) == '\r')
             {
                 // printf("pox nedi qaqa\n");
                 *(qValue+strlen(qValue)-1) = '\0';
-                accepts[it].mime_type = malloc(200);
                 strncpy(accepts[it].mime_type,token,qValue-token);
                 
+            }else
+            {
+                strncpy(accepts[it].mime_type,token,qValue-token-1);
             }
-            accepts[it].mime_type = malloc(200);
-            strncpy(accepts[it].mime_type,token,qValue-token-1);
             *(accepts[it].mime_type+(qValue-token-1)) = '\0';
-            int resad = strlen(accepts[it].mime_type);
+
+            qValue +=2;
+            qValueFLoat = strtof(qValue,NULL);
+
+
             // printf("%s\n",accepts[it].mime_type);
-            // for (int i = 0; i < resad; i++)
-            // {
-            //     printf("%c ",*(accepts[it].mime_type+i));
-            // }
-            // printf("\n");
-            // for (int i = 0; i < resad; i++)
-            // {
-            //     printf("%d ",*(accepts[it].mime_type+i));
-            // }
             
             // printf("qValue-token=%d\n",qValue-token-1);
-            printf("\e[34m Parsed- %s\n\e[0m",accepts[it].mime_type);
-            // printf("token - %c vs qValue - %c",*token,*qValue);
             
-            qValue +=2;
-            // for (int i = 0; i < strlen(qValue); i++)
-            // {
-            //     printf("%d ",*(qValue+i));
-            // }
-            // printf("\n");
-            // printf(" length - %d \n",strlen(qValue));
-            printf("%f o yee\n", strtof(qValue,NULL));
-            accepts[it].quality = strtof(qValue,NULL);
+                for (int i = it-idx; i < it; i++)
+                {
+                    accepts[i].quality = qValueFLoat;
+                }
+                idx=0;
+            
+            accepts[it].quality = qValueFLoat;
+            
+                        
         }else
         {
-            accepts[it].mime_type = malloc(200);
             // printf("\e[34m %d \e[0m\n",strlen(token));
             strcpy(accepts[it].mime_type,token);
-            printf("\e[34m Parsed - %s\n\e[0m",accepts[it].mime_type);
+            idx++;
         }
         it++;
         
         trimmed_buf = NULL;
     }
-    
 
+    for (int i = 0; i < it; i++)
+    {
+        printf("\e[34m Parsed- %s\n\e[0m",accepts[i].mime_type);
+        printf("\e[35m Parsed- %f\n\e[0m",accepts[i].quality);
+    }
+    
+    
+    printf("%d\n",it);
 
 
 }

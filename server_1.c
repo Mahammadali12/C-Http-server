@@ -21,14 +21,14 @@
 
 struct http_request_requestLine
 {
-    char* method;
-    char* request_URI;
-    char* HTTP_version;
+    char method [256];
+    char request_URI [256];
+    char HTTP_version [256];
 };
 
 struct accept_t
 {
-    char* mime_type;
+    char mime_type [256];
     float quality;
 };
 
@@ -38,28 +38,29 @@ struct accept_t accepts[10];
 int s=0;
 struct http_request
 {
-    char* Host;
-    char* Connection;
-    char* Accept;  
+    char Host [256];
+    char Connection [256];
+    char Accept [256];  
 };
 
 struct http_request_requestLine parseRequestFirstLine(char* request);
 void  generateResponseAndSendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd);
-char** getResources(int* file_count);
+void getResources(int* file_count);
 void getCurrentTime(char* d);
-void parseRequest_TEST(char* request,struct http_request * ht);
+void parseRequestHeaders(char* request,struct http_request * ht);
 void handleClient(int client_fd, int server_fd);
 void sendResponse(struct http_request full_request,struct http_request_requestLine request,char* date,int client_fd, int fileFound);
 void tokenizeAcceptHeader(char* trimmed_buf, int trimmed_buf_length);
+int comp(const void* a, const void* b);
 
 
-char** files;
+char** files ;
 int file_count;
-char* date;
+char date [128];
 
 int main (void)
 {
-    date = malloc(BUFF_SIZE);
+    
     getCurrentTime(date);
 
     int socket_fd;
@@ -84,12 +85,22 @@ int main (void)
     if((socket_fd = socket(addr.sin_family,SOCK_STREAM,0)) == -1)
     {
         perror ("SOCKET()");
+        for (size_t i = 0; i < file_count; i++) //* free file_paths
+        {
+            free(*(files+i));
+        }
+        free(files);
         return(1);
     }
 
     int opt = 1;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) { //* with this function OS does not wait for a few minutes */
         perror("setsockopt(SO_REUSEADDR) failed");                                  // THis function is to fix BIND() problem
+        for (size_t i = 0; i < file_count; i++) //* free file_paths
+        {
+            free(*(files+i));
+        }
+        free(files);
         return(1);
     }
 
@@ -97,18 +108,28 @@ int main (void)
     if( bind(socket_fd,(struct sockaddr *)&addr,sizeof addr) == -1)
     {
         perror("BIND()");
+        for (size_t i = 0; i < file_count; i++) //* free file_paths
+        {
+            free(*(files+i));
+        }
+        free(files);
         return(1);
     }
 
     if( listen(socket_fd,20) == -1)
     {
         perror("LISTEN()");
+        for (size_t i = 0; i < file_count; i++) //* free file_paths
+        {
+            free(*(files+i));
+        }
+        free(files);
         return(1);
     }
 
-    files = getResources(&file_count); //!    TODO:   free() array of file names 
+    getResources(&file_count); //!    TODO:   free() array of file names 
     
-    printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
+    // printf("\e[33mFiles were counted: %i\e[0m\n",file_count);
 
     int client_fd;
     while (1)
@@ -120,7 +141,13 @@ int main (void)
         if (client_fd == -1)
         {
             perror("ACCEPT()");
-            continue;
+            for (size_t i = 0; i < file_count; i++) //* free file_paths
+            {
+                free(*(files+i));
+            }
+            free(files);
+            // continue;
+            return -1;
         }
 
         pid_t pid = fork();
@@ -129,16 +156,16 @@ int main (void)
             printf("[child %d] handling client %d\n", getpid(), client_fd);
             close(socket_fd);
             handleClient(client_fd,socket_fd);
+            s++;   
             exit(0);
         }else
         {
             printf("[parent %d] spawned child %d for client %d\n", getpid(), pid, client_fd);
             close(client_fd);
         }
-        s++;   
     }
 
-    free(date);
+    // free(date);
     shutdown(socket_fd,SHUT_RDWR);
     close(client_fd);
     close(socket_fd);
@@ -149,7 +176,6 @@ int main (void)
     }
     free(files);
 }
-
 
 void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
 {
@@ -162,10 +188,10 @@ void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
     while (token = strtok_r(trimmed_buf,",",&svptr))
     {
         
-        printf("\e[1mTOKEN - %s\e[0m\n",token);
+        // printf("\e[1mTOKEN - %s\e[0m\n",token);
         // printf("\e[1mbuf - %s\e[0m\n",trimmed_buf);
         // printf("\e[1msvp - %s\e[0m\n",svptr);
-        accepts[it].mime_type = malloc(200);
+        // accepts[it].mime_type = malloc(200);
         if ((qValue = strstr(token,"q=")) != NULL)
         {
             if (*(qValue+strlen(qValue)-1) == '\r')
@@ -207,15 +233,16 @@ void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
         
         trimmed_buf = NULL;
     }
+    // free(svptr);
 
-    for (int i = 0; i < it; i++)
-    {
-        printf("\e[34m Parsed- %s\n\e[0m",accepts[i].mime_type);
-        printf("\e[35m Parsed- %f\n\e[0m",accepts[i].quality);
-    }
+    // for (int i = 0; i < it; i++)
+    // {
+    //     printf("\e[34m Parsed- %s\n\e[0m",accepts[i].mime_type);
+    //     printf("\e[35m Parsed- %f\n\e[0m",accepts[i].quality);
+    // }
     
     
-    printf("%d\n",it);
+    // printf("%d\n",it);
 
 
 }
@@ -223,20 +250,24 @@ void tokenizeAcceptHeader(char* trimmed_buf,int trimmed_buf_length)
 void parseAcceptHeader(char* accept)
 {
     int length = 0;
-    int i = 0 ;
 
     if(strncmp(accept,"*/*",3) == 0)
-    printf("Accept header is : */*\n");
+    {
+        // accepts[0].mime_type = malloc(10);
+        strcpy(accepts[0].mime_type,"*/*");
+    }
     else
     {
         printf("Accept header is other type\n");
         // struct accept_t accepts [10];
         int accept_length = strstr(accept,"\n")-accept;
-        char* buf = malloc(accept_length);
+        char* buf = malloc(accept_length+1);
         strncpy(buf,accept,accept_length);
+        buf[accept_length] = '\0';
         int buf_length = strlen(buf);
         char* trimmed_buf = malloc(accept_length);
         int trimmmed_buf_length = 0;
+        printf(" DOING good \n");
         for (int i = 0; i < buf_length ; i++)
         {
             if (*(buf+i) !=' ')
@@ -244,10 +275,11 @@ void parseAcceptHeader(char* accept)
                 *(trimmed_buf+trimmmed_buf_length) = *(buf+i);
                 trimmmed_buf_length++;
             }
-            
         }
-
+        // printf("%s\n",trimmed_buf);
         tokenizeAcceptHeader(trimmed_buf,trimmmed_buf_length);
+        free(buf);
+        free(trimmed_buf);
         // char* token;
         // char* svptr = trimmed_buf;
         // while (token = strtok_r(trimmed_buf,",",&svptr))
@@ -256,27 +288,22 @@ void parseAcceptHeader(char* accept)
         //     printf("\e[1m%s\e[0m\n",token);
         // }
         
-        
-        printf("\e[31m%s\e[0m\n",buf);
-        printf("\e[32m%s\e[0m\n",trimmed_buf);
-        while (*(accept+i) != '\n')
-        {
-            // printf("%d ",*(accept+i));
-            i++;
-        }
     }
+    // for (int i = 0; i <= acceptHeaderNumber; i++)
+    // {
+    //     if(accepts[i].mime_type)
+    //     printf("%s - %f\n",accepts[i].mime_type,accepts[i].quality);
+    // }
     
-    printf("\n");
-    printf("\e[1mACCEPT - \e[0m %d\n",i);
 }
 
 struct http_request_requestLine parseRequestFirstLine(char* request)
 {
     
     struct http_request_requestLine req;
-    req.method = malloc(256);
-    req.HTTP_version = malloc(256);
-    req.request_URI = malloc(256);
+    // req.method = malloc(256);
+    // req.HTTP_version = malloc(256);
+    // req.request_URI = malloc(256);
 
     // if(!request || *request == '\0')
     // {
@@ -376,6 +403,10 @@ void sendResponse(struct http_request full_request,struct http_request_requestLi
     int sent_byte = 0;
     if((sent_byte = send(client_fd,response,strlen(response),0)) == 0)
     {
+        free(response);
+        free(response_body);
+        free(file_path);
+        free(content_type);
         perror("ZERO BYTES WERE SENT");
     }
 
@@ -394,6 +425,10 @@ void sendResponse(struct http_request full_request,struct http_request_requestLi
             if((sent_byte = send(client_fd,response,bytes_read,0)) == -1)
             {
                 perror("ZERO BYTES WERE SENT");
+                free(response_body);
+                free(response);
+                free(file_path);
+                free(content_type);
                 return;
             }
             printf("\e[1m%d\e[0m bytes were sent to \e[32mresponse\e[0m\n",sent_byte);
@@ -407,7 +442,9 @@ void sendResponse(struct http_request full_request,struct http_request_requestLi
     }
 
     free(response_body);
+    free(response);
     free(file_path);
+    free(content_type);
     close(file_dp);
     return;
 }
@@ -428,7 +465,7 @@ void generateResponseAndSendResponse(struct http_request full_request,struct htt
     sendResponse(full_request,request,date,client_fd,0);
 }
 
-char** getResources(int* file_count)
+void getResources(int* file_count)
 {
 
 
@@ -446,8 +483,8 @@ char** getResources(int* file_count)
       closedir(d);
     }
 
-    char** resources;
-    resources = malloc(sizeof(char*)*(*file_count));
+    // char** resources;
+    files = malloc(sizeof(char*)*(*file_count));
 
     int i = 0;
     d = opendir("./resources");   //* Code I ctrl c-v to list files in a directory
@@ -456,9 +493,9 @@ char** getResources(int* file_count)
         if (dir->d_type == DT_REG)
         {
             // printf("%s %i\n", dir->d_name,strlen(dir->d_name));
-            *(resources+i) = malloc(strlen(dir->d_name));
+            *(files+i) = malloc(512);
             // /   *(resources+i) = dir->d_name;
-            strcpy(*(resources+i),dir->d_name);
+            strcpy(*(files+i),dir->d_name);
             // printf("%s %i\n",*(resources+i),strlen(*(resources+i)));
             // printf("%c\n",*(*(resources+i)));
             i++;
@@ -466,7 +503,7 @@ char** getResources(int* file_count)
       }
       closedir(d);
     }
-    return resources;
+    // return resources;
 }
 
 void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do not edit
@@ -485,7 +522,7 @@ void getCurrentTime(char* d)  // * this function was CTRL C-V from internet do n
     strcpy(d,date_str);
 }
 
-void parseRequest_TEST(char* received_request,struct http_request * http)
+void parseRequestHeaders(char* received_request,struct http_request * http)
 {
 
     char* request_temp = received_request;
@@ -500,19 +537,23 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
             request_temp++;
             if(strncmp("Connection",request_temp,10) == 0 )
             {
-                for (int i = 0; i < 12; i++)
-                request_temp++;
+                request_temp +=12;
 
                 while( *(request_temp+1) != '\r')
                 {
                     request_temp++; 
                     length++;
                 }
-                http->Connection = malloc(length+2);
+                // http->Connection = malloc(length+2);
                 strncpy(http->Connection,request_temp-length,length+1); //* be careful for +1 
                 *(http->Connection+length+1) = '\0';
                 length = 0;                
-                printf("\e[1m Connection was parsed\e[0m\n");
+                printf("\e[1m Connection was parsed - %s\e[0m\n",http->Connection);
+                for (int i = 0; i <= strlen(http->Connection); i++)
+                {
+                    printf("%d ",*(http->Connection+i));
+                }
+                printf("\n");
             }
             if (strncmp("Host",request_temp,4) == 0)
             {
@@ -526,42 +567,56 @@ void parseRequest_TEST(char* received_request,struct http_request * http)
 
                 }
 
-                http->Host = malloc(length+2);
+                // http->Host = malloc(length+2);
                 strncpy(http->Host,request_temp-length,length+1); //* be careful for +1 
                 *(http->Host+length+2) = '\0';
                 length = 0;
                 printf("\e[1m Host was parsed - %s\e[0m\n", http->Host);
+                for (int i = 0; i <= strlen(http->Host); i++)
+                {
+                    printf("%d ",*(http->Host+i));
+                }
+                printf("\n");
             }
-            if(strncmp("Accept:", request_temp, 7) == 0 )
+            if(strncmp("Accept", request_temp, 6) == 0 )
             {
                 // for (int i = 0; i < 8; i++)
                 request_temp+=8;
-                char* accept_body = malloc(BUFF_SIZE);
+                // char* accept_body = malloc(BUFF_SIZE);
+                int test = 0;
+                printf("Entering parseAcceptHeader() for %d\n",test++);
                 parseAcceptHeader(request_temp);
-                while (*(request_temp+1) != ',' && *(request_temp+1) != ';' && *(request_temp+1) != ',')
-                {
 
-
-                    request_temp++;
-                    length++;
-                }
-
-                http->Accept = malloc(length+2);
-                strncpy(http->Accept,request_temp-length,length+1);
-                *(http->Accept+length+1) = '\0';
+                // http->Accept = malloc(strlen(accepts[0].mime_type));
+                qsort(accepts,sizeof(accepts)/sizeof(accepts[0]),sizeof(struct accept_t),comp);
+                strcpy(http->Accept,accepts[0].mime_type);
                 
-                length = 0;
-                printf("\e[1m Accept was parsed\e[0m\n");
+                
+                // length = 0;
+                printf("\e[1m Accept was parsed - %s\e[0m\n",http->Accept);
+                
+                // int acceptHeaderNumber = sizeof(accepts)/sizeof(struct accept_t);
+                // for (int i = 0; i < 10; i++)
+                // {
+                //     free(accepts[i].mime_type);
+                   
+                // }
+                
             }
-            // else
-            // {
-                // printf("DALDAN\n");
-            // }
-            // printf("daldan\n");
             
         }
         request_temp++;
     }
+}
+
+int comp(const void* a, const void* b)
+{
+    const struct accept_t *x = (const struct accept_t *)a;
+    const struct accept_t *y = (const struct accept_t *)b;
+
+    if (x->quality < y->quality) return 1;
+    if (x->quality > y->quality) return -1;
+    return 0;
 }
 
 void handleClient(int client_fd, int server_fd)
@@ -573,7 +628,11 @@ void handleClient(int client_fd, int server_fd)
     while(( received_byte = recv(client_fd,recieved_msg,BUFF_SIZE,0)) != -1)   
     {
         if(received_byte == 0)
-        return ;
+        {
+            free(recieved_msg);
+            break;
+        }
+
         printf("\e[1m%d\e[0m bytes were received from client: \e[1m%d\e[0m\n",received_byte,client_fd);
         printf("\e[33m%s\e[0m\n",recieved_msg);
         // printf("%d\n",strlen(recieved_msg));
@@ -581,19 +640,23 @@ void handleClient(int client_fd, int server_fd)
 
         struct http_request_requestLine request_first_line = parseRequestFirstLine(recieved_msg);
         struct http_request request;
-        parseRequest_TEST(recieved_msg,&request);
+        // request.Accept = NULL;
+        // request.Host = NULL;
+        // request.Connection = NULL;
+        
+        parseRequestHeaders(recieved_msg,&request);
         generateResponseAndSendResponse(request,request_first_line,date,client_fd);
 
         printf("--------------\n");
 
-        if(!request.Connection)
+        if(request.Connection)
         printf("Connection: %s %d\n",request.Connection,strlen(request.Connection));
         printf("Host: %s %d\n",request.Host,strlen(request.Host));
         printf("Accept: %s %d\n",request.Accept,strlen(request.Accept));
         printf("%d\n",s);
 
 
-        if(!request.Connection)
+        if(request.Connection)
         if(strcmp(request.Connection,"close") == 0)
         break;
         free(recieved_msg);
@@ -602,15 +665,14 @@ void handleClient(int client_fd, int server_fd)
 
         // free(response);
 
-        if(!request.Connection)
-        free(request.Connection);
-        free(request.Host);
-        free(request.Accept);
+        // if(request.Connection)
+        // free(request.Connection);
+        // free(request.Host);
+        // free(request.Accept);
 
-        free(request_first_line.request_URI);
-        free(request_first_line.method);
-        free(request_first_line.HTTP_version);
+        // free(request_first_line.request_URI);
+        // free(request_first_line.method);
+        // free(request_first_line.HTTP_version);
 
     }
-
 }

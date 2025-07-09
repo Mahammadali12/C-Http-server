@@ -13,7 +13,8 @@
       "dirent.h": "c",
       "errno.h": "c",
       "limits.h": "c",
-      "string.h": "c"
+      "string.h": "c",
+      "utils.h": "c"
     },
     "better-comments.multilineComments": true,
     "better-comments.highlightPlainText": true,

@@ -29,3 +29,6 @@ Accept: text/html;q=1.0,text/html;level=1;q=0.8
 
 # 10. Custom vendor media types
 Accept: application/vnd.myapp.v2+json,application/json;q=0.5
+
+
+
